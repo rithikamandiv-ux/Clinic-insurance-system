@@ -1,11 +1,28 @@
 package com.rithika.clinicinsurance.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "patients")
 public class Patient {
 
+    @Id
+    @Column(name = "patient_id")
     private String patientId;
+
+    @Column(name = "patient_name", nullable = false)
     private String patientName;
+
+    @Column(nullable = false)
     private int age;
+
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
+
+    @Column(name = "insurance_status", nullable = false)
     private boolean insuranceStatus;
 
     public Patient() {
