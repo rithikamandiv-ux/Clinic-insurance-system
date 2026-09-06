@@ -16,6 +16,90 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidInsuranceClaimStatusTransitionException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidInsuranceClaimStatusTransition(
+            InvalidInsuranceClaimStatusTransitionException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+    @ExceptionHandler(MedicalRecordAlreadyHasClaimException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleMedicalRecordAlreadyHasClaim(
+            MedicalRecordAlreadyHasClaimException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+    @ExceptionHandler(InsuranceClaimNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInsuranceClaimNotFound(
+            InsuranceClaimNotFoundException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    @ExceptionHandler(InsuranceClaimAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInsuranceClaimAlreadyExists(
+            InsuranceClaimAlreadyExistsException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
     @ExceptionHandler(PatientAlreadyHasPolicyException.class)
     public ResponseEntity<ApiErrorResponse>
     handlePatientAlreadyHasPolicy(
