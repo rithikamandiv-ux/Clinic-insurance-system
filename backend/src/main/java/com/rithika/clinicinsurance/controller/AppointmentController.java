@@ -91,6 +91,32 @@ public class AppointmentController {
         );
     }
 
+    @PatchMapping("/{appointmentId}/complete")
+    public ResponseEntity<AppointmentResponse> completeAppointment(
+            @PathVariable String appointmentId
+    ) {
+
+        Appointment appointment =
+                appointmentService.completeAppointment(appointmentId);
+
+        return ResponseEntity.ok(
+                AppointmentResponse.from(appointment)
+        );
+    }
+
+    @PatchMapping("/{appointmentId}/cancel")
+    public ResponseEntity<AppointmentResponse> cancelAppointment(
+            @PathVariable String appointmentId
+    ) {
+
+        Appointment appointment =
+                appointmentService.cancelAppointment(appointmentId);
+
+        return ResponseEntity.ok(
+                AppointmentResponse.from(appointment)
+        );
+    }
+
     @DeleteMapping("/{appointmentId}")
     public ResponseEntity<Void> deleteAppointment(
             @PathVariable String appointmentId

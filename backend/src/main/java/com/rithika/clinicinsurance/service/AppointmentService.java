@@ -4,6 +4,7 @@ import com.rithika.clinicinsurance.enums.AppointmentStatus;
 import com.rithika.clinicinsurance.exception.AppointmentAlreadyExistsException;
 import com.rithika.clinicinsurance.exception.AppointmentNotFoundException;
 import com.rithika.clinicinsurance.exception.DoctorNotFoundException;
+import com.rithika.clinicinsurance.exception.InvalidAppointmentStatusTransitionException;
 import com.rithika.clinicinsurance.exception.PatientNotFoundException;
 import com.rithika.clinicinsurance.model.Appointment;
 import com.rithika.clinicinsurance.model.Doctor;
@@ -103,10 +104,43 @@ public class AppointmentService {
         return appointmentRepository.save(existingAppointment);
     }
 
+    public Appointment completeAppointment(String appointmentId) {
+
+        Appointment appointment = getAppointmentById(appointmentId);
+
+        if (appointment.getStatus() != AppointmentStatus.BOOKED) {
+            throw new InvalidAppointmentStatusTransitionException(
+                    appointmentId,
+                    appointment.getStatus(),
+                    AppointmentStatus.COMPLETED
+            );
+        }
+
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+
+        return appointmentRepository.save(appointment);
+    }
+
+    public Appointment cancelAppointment(String appointmentId) {
+
+        Appointment appointment = getAppointmentById(appointmentId);
+
+        if (appointment.getStatus() != AppointmentStatus.BOOKED) {
+            throw new InvalidAppointmentStatusTransitionException(
+                    appointmentId,
+                    appointment.getStatus(),
+                    AppointmentStatus.CANCELLED
+            );
+        }
+
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+
+        return appointmentRepository.save(appointment);
+    }
+
     public void deleteAppointment(String appointmentId) {
 
-        Appointment appointment =
-                getAppointmentById(appointmentId);
+        Appointment appointment = getAppointmentById(appointmentId);
 
         appointmentRepository.delete(appointment);
     }

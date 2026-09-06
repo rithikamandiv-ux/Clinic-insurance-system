@@ -16,6 +16,27 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidAppointmentStatusTransitionException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidAppointmentStatusTransition(
+            InvalidAppointmentStatusTransitionException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
     @ExceptionHandler(AppointmentAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleAppointmentAlreadyExists(
             AppointmentAlreadyExistsException exception,
