@@ -16,6 +16,46 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(AppointmentAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleAppointmentAlreadyExists(
+            AppointmentAlreadyExistsException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+    @ExceptionHandler(AppointmentNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleAppointmentNotFound(
+            AppointmentNotFoundException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
     @ExceptionHandler(DoctorAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleDoctorAlreadyExists(
             DoctorAlreadyExistsException exception,

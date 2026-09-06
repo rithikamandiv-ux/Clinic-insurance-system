@@ -1,0 +1,113 @@
+package com.rithika.clinicinsurance.service;
+
+import com.rithika.clinicinsurance.enums.AppointmentStatus;
+import com.rithika.clinicinsurance.exception.AppointmentAlreadyExistsException;
+import com.rithika.clinicinsurance.exception.AppointmentNotFoundException;
+import com.rithika.clinicinsurance.exception.DoctorNotFoundException;
+import com.rithika.clinicinsurance.exception.PatientNotFoundException;
+import com.rithika.clinicinsurance.model.Appointment;
+import com.rithika.clinicinsurance.model.Doctor;
+import com.rithika.clinicinsurance.model.Patient;
+import com.rithika.clinicinsurance.repository.AppointmentRepository;
+import com.rithika.clinicinsurance.repository.DoctorRepository;
+import com.rithika.clinicinsurance.repository.PatientRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+public class AppointmentService {
+
+    private final AppointmentRepository appointmentRepository;
+    private final PatientRepository patientRepository;
+    private final DoctorRepository doctorRepository;
+
+    public AppointmentService(
+            AppointmentRepository appointmentRepository,
+            PatientRepository patientRepository,
+            DoctorRepository doctorRepository
+    ) {
+        this.appointmentRepository = appointmentRepository;
+        this.patientRepository = patientRepository;
+        this.doctorRepository = doctorRepository;
+    }
+
+    public List<Appointment> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
+
+    public Appointment getAppointmentById(String appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElseThrow(
+                        () -> new AppointmentNotFoundException(appointmentId)
+                );
+    }
+
+    public Appointment addAppointment(
+            String appointmentId,
+            String patientId,
+            String doctorId,
+            LocalDate appointmentDate
+    ) {
+
+        if (appointmentRepository.existsById(appointmentId)) {
+            throw new AppointmentAlreadyExistsException(appointmentId);
+        }
+
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(
+                        () -> new PatientNotFoundException(patientId)
+                );
+
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(
+                        () -> new DoctorNotFoundException(doctorId)
+                );
+
+        Appointment appointment = new Appointment(
+                appointmentId,
+                appointmentDate,
+                AppointmentStatus.BOOKED,
+                patient,
+                doctor
+        );
+
+        return appointmentRepository.save(appointment);
+    }
+
+    public Appointment updateAppointment(
+            String appointmentId,
+            String patientId,
+            String doctorId,
+            LocalDate appointmentDate
+    ) {
+
+        Appointment existingAppointment =
+                getAppointmentById(appointmentId);
+
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(
+                        () -> new PatientNotFoundException(patientId)
+                );
+
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(
+                        () -> new DoctorNotFoundException(doctorId)
+                );
+
+        existingAppointment.setPatient(patient);
+        existingAppointment.setDoctor(doctor);
+        existingAppointment.setAppointmentDate(appointmentDate);
+
+        return appointmentRepository.save(existingAppointment);
+    }
+
+    public void deleteAppointment(String appointmentId) {
+
+        Appointment appointment =
+                getAppointmentById(appointmentId);
+
+        appointmentRepository.delete(appointment);
+    }
+}
