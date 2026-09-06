@@ -12,14 +12,45 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import com.rithika.clinicsystem.api.ApiClient;
+import com.rithika.clinicsystem.api.PatientApiService;
+import com.rithika.clinicsystem.api.DoctorApiService;
+import com.rithika.clinicsystem.api.AppointmentApiService;
+import com.rithika.clinicsystem.api.MedicalRecordApiService;
+import com.rithika.clinicsystem.api.InsurancePolicyApiService;
+import com.rithika.clinicsystem.api.InsuranceClaimApiService;
 
 
 public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
         ClinicService clinicService = new ClinicService();
+
         InsuranceService insuranceService = new InsuranceService();
+
+        ApiClient apiClient =
+                new ApiClient();
+
+        PatientApiService patientApiService =
+                new PatientApiService(apiClient);
+
+        DoctorApiService doctorApiService =
+                new DoctorApiService(apiClient);
+
+        AppointmentApiService appointmentApiService =
+                new AppointmentApiService(apiClient);
+
+        MedicalRecordApiService medicalRecordApiService =
+                new MedicalRecordApiService(apiClient);
+
+        InsurancePolicyApiService insurancePolicyApiService =
+                new InsurancePolicyApiService(apiClient);
+
+        InsuranceClaimApiService insuranceClaimApiService =
+                new InsuranceClaimApiService(apiClient);
+
         // Load saved data into memory
         clinicService.setPatients(FileUtil.loadPatients());
         clinicService.setDoctors(FileUtil.loadDoctors());
@@ -46,7 +77,12 @@ public class MainApp extends Application {
                         "-fx-font-weight: bold;"
         );
         patientButton.setOnAction(e -> {
-            PatientUI patientUI = new PatientUI(clinicService);
+
+            PatientUI patientUI =
+                    new PatientUI(
+                            patientApiService
+                    );
+
             patientUI.show();
         });
 
@@ -61,7 +97,12 @@ public class MainApp extends Application {
                         "-fx-font-weight: bold;"
         );
         doctorButton.setOnAction(actionEvent -> {
-            DoctorUI doctorUI = new DoctorUI(clinicService);
+
+            DoctorUI doctorUI =
+                    new DoctorUI(
+                            doctorApiService
+                    );
+
             doctorUI.show();
         });
 
@@ -77,8 +118,37 @@ public class MainApp extends Application {
                         "-fx-font-weight: bold;"
         );
         appointmentButton.setOnAction(actionEvent -> {
-            AppointmentUI appointmentUI = new AppointmentUI(clinicService);
+
+            AppointmentUI appointmentUI =
+                    new AppointmentUI(
+                            appointmentApiService
+                    );
+
             appointmentUI.show();
+        });
+
+        Button policyButton =
+                new Button("Manage Insurance Policies");
+
+        policyButton.setPrefWidth(280);
+        policyButton.setPrefHeight(45);
+
+        policyButton.setStyle(
+                "-fx-background-color: #FFD3AC;" +
+                        "-fx-text-fill: #3B2A1A;" +
+                        "-fx-border-color: transparent;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;"
+        );
+
+        policyButton.setOnAction(event -> {
+
+            InsurancePolicyUI insurancePolicyUI =
+                    new InsurancePolicyUI(
+                            insurancePolicyApiService
+                    );
+
+            insurancePolicyUI.show();
         });
 
 
@@ -92,8 +162,13 @@ public class MainApp extends Application {
                         "-fx-font-size: 14px;" +
                         "-fx-font-weight: bold;"
         );
-        claimButton.setOnAction(actionEvent -> {
-            ClaimUI claimUI = new ClaimUI(clinicService, new InsuranceService());
+        claimButton.setOnAction(event -> {
+
+            ClaimUI claimUI =
+                    new ClaimUI(
+                            insuranceClaimApiService
+                    );
+
             claimUI.show();
         });
 
@@ -109,10 +184,14 @@ public class MainApp extends Application {
                         "-fx-font-weight: bold;"
         );
         recordButton.setOnAction(e -> {
-            MedicalRecordUI recordUI = new MedicalRecordUI(clinicService);
+
+            MedicalRecordUI recordUI =
+                    new MedicalRecordUI(
+                            medicalRecordApiService
+                    );
+
             recordUI.show();
         });
-
 
         VBox layout = new VBox(28);
         VBox.setMargin(titleLabel, new Insets(0, 0, 40, 0));
@@ -129,6 +208,7 @@ public class MainApp extends Application {
                 patientButton,
                 doctorButton,
                 appointmentButton,
+                policyButton,
                 claimButton,
                 recordButton
         );

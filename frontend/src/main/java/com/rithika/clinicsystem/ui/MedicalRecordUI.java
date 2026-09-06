@@ -1,46 +1,85 @@
 package com.rithika.clinicsystem.ui;
 
-import com.rithika.clinicsystem.model.MedicalRecord;
-import com.rithika.clinicsystem.service.ClinicService;
+import com.rithika.clinicsystem.api.ApiException;
+import com.rithika.clinicsystem.api.MedicalRecordApiService;
+import com.rithika.clinicsystem.dto.MedicalRecordRequest;
+import com.rithika.clinicsystem.dto.MedicalRecordResponse;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 public class MedicalRecordUI {
 
-    private final ClinicService clinicService;
+    private final MedicalRecordApiService medicalRecordApiService;
 
-    public MedicalRecordUI(ClinicService clinicService) {
-        this.clinicService = clinicService;
+    public MedicalRecordUI(
+            MedicalRecordApiService medicalRecordApiService
+    ) {
+        this.medicalRecordApiService = medicalRecordApiService;
     }
 
     public void show() {
+
         Stage stage = new Stage();
 
-        Label titleLabel = new Label("Medical Record Management");
+        Label titleLabel =
+                new Label("Medical Record Management");
+
         titleLabel.setStyle(
                 "-fx-text-fill: white;" +
                         "-fx-font-size: 24px;" +
                         "-fx-font-weight: bold;"
         );
 
-        TextField recordIdField = new TextField();
-        recordIdField.setPromptText("Enter Record ID");
+        TextField recordIdField =
+                new TextField();
 
-        TextField patientIdField = new TextField();
-        patientIdField.setPromptText("Enter Patient ID");
+        recordIdField.setPromptText(
+                "Enter Record ID"
+        );
 
-        TextField diagnosisField = new TextField();
-        diagnosisField.setPromptText("Enter Diagnosis");
+        TextField appointmentIdField =
+                new TextField();
 
-        TextField costField = new TextField();
-        costField.setPromptText("Enter Treatment Cost");
+        appointmentIdField.setPromptText(
+                "Enter Appointment ID"
+        );
 
-        Button addButton = new Button("Add Medical Record");
-        Button viewButton = new Button("View Records");
+        TextField diagnosisField =
+                new TextField();
+
+        diagnosisField.setPromptText(
+                "Enter Diagnosis"
+        );
+
+        TextField treatmentField =
+                new TextField();
+
+        treatmentField.setPromptText(
+                "Enter Treatment"
+        );
+
+        TextField costField =
+                new TextField();
+
+        costField.setPromptText(
+                "Enter Treatment Cost"
+        );
+
+        Button addButton =
+                new Button("Add Medical Record");
+
+        Button viewButton =
+                new Button("View Records");
 
         addButton.setPrefWidth(220);
         viewButton.setPrefWidth(220);
@@ -54,107 +93,264 @@ public class MedicalRecordUI {
         addButton.setStyle(buttonStyle);
         viewButton.setStyle(buttonStyle);
 
-        TextArea outputArea = new TextArea();
+        TextArea outputArea =
+                new TextArea();
+
         outputArea.setEditable(false);
-        outputArea.setPrefHeight(250);
+        outputArea.setPrefHeight(260);
+
         outputArea.setStyle(
                 "-fx-control-inner-background: #111111;" +
-                        "-fx-text-fill: white;"
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 13px;"
         );
 
-        addButton.setOnAction(e -> {
+        /*
+         * ADD MEDICAL RECORD
+         */
+        addButton.setOnAction(event -> {
 
-            String recordId = recordIdField.getText().trim();
-            String patientId = patientIdField.getText().trim();
-            String diagnosis = diagnosisField.getText().trim();
-            String costText = costField.getText().trim();
+            String recordId =
+                    recordIdField
+                            .getText()
+                            .trim();
 
-            if (recordId.isEmpty() || patientId.isEmpty() || diagnosis.isEmpty() || costText.isEmpty()) {
-                outputArea.setText("Please fill in all fields.");
+            String appointmentId =
+                    appointmentIdField
+                            .getText()
+                            .trim();
+
+            String diagnosis =
+                    diagnosisField
+                            .getText()
+                            .trim();
+
+            String treatment =
+                    treatmentField
+                            .getText()
+                            .trim();
+
+            String costText =
+                    costField
+                            .getText()
+                            .trim();
+
+            if (
+                    recordId.isEmpty()
+                            || appointmentId.isEmpty()
+                            || diagnosis.isEmpty()
+                            || treatment.isEmpty()
+                            || costText.isEmpty()
+            ) {
+
+                outputArea.setText(
+                        "Please fill in all fields."
+                );
+
                 return;
             }
 
-            if (clinicService.findMedicalRecordById(recordId) != null) {
-                outputArea.setText("Record ID already exists.");
-                return;
-            }
+            BigDecimal treatmentCost;
 
-            if (clinicService.findPatienById(patientId) == null) {
-                outputArea.setText("Patient not found.");
-                return;
-            }
-
-            double cost;
             try {
-                cost = Double.parseDouble(costText);
-            } catch (NumberFormatException ex) {
-                outputArea.setText("Cost must be a valid number.");
+
+                treatmentCost =
+                        new BigDecimal(costText);
+
+            } catch (NumberFormatException exception) {
+
+                outputArea.setText(
+                        "Treatment cost must be a valid number."
+                );
+
                 return;
             }
 
-            MedicalRecord record = new MedicalRecord(
-                    recordId,
-                    patientId,
-                    diagnosis,
-                    cost
-            );
+            if (
+                    treatmentCost.compareTo(
+                            BigDecimal.ZERO
+                    ) < 0
+            ) {
 
-            clinicService.addMedicalRecord(record);
+                outputArea.setText(
+                        "Treatment cost cannot be negative."
+                );
 
-            outputArea.setText("Medical record added successfully.");
-
-            recordIdField.clear();
-            patientIdField.clear();
-            diagnosisField.clear();
-            costField.clear();
-        });
-
-        viewButton.setOnAction(e -> {
-
-            if (clinicService.getAllMedicalRecords().isEmpty()) {
-                outputArea.setText("No records found.");
                 return;
             }
 
-            StringBuilder builder = new StringBuilder();
+            MedicalRecordRequest request =
+                    new MedicalRecordRequest(
+                            recordId,
+                            appointmentId,
+                            diagnosis,
+                            treatment,
+                            treatmentCost
+                    );
 
-            for (MedicalRecord record : clinicService.getAllMedicalRecords()) {
-                builder.append("Record ID: ").append(record.getRecordId()).append("\n");
-                builder.append("Patient ID: ").append(record.getPatientId()).append("\n");
-                builder.append("Diagnosis: ").append(record.getDiagnosis()).append("\n");
-                builder.append("Treatment Cost: Rs. ").append(record.getTreatmentCost()).append("\n");
-                builder.append("-----------------------------\n");
+            try {
+
+                MedicalRecordResponse response =
+                        medicalRecordApiService
+                                .addMedicalRecord(
+                                        request
+                                );
+
+                outputArea.setText(
+                        "Medical record added successfully.\n\n" +
+                                formatMedicalRecord(response)
+                );
+
+                recordIdField.clear();
+                appointmentIdField.clear();
+                diagnosisField.clear();
+                treatmentField.clear();
+                costField.clear();
+
+            } catch (ApiException exception) {
+
+                outputArea.setText(
+                        "Unable to add medical record.\n\n" +
+                                exception.getMessage()
+                );
             }
-
-            outputArea.setText(builder.toString());
         });
 
-        VBox layout = new VBox(15);
-        layout.setPadding(new Insets(20));
-        layout.setAlignment(Pos.CENTER);
-        layout.setStyle("-fx-background-color: #664C36;");
+        /*
+         * VIEW MEDICAL RECORDS
+         */
+        viewButton.setOnAction(event -> {
+
+            try {
+
+                List<MedicalRecordResponse> records =
+                        medicalRecordApiService
+                                .getAllMedicalRecords();
+
+                if (records.isEmpty()) {
+
+                    outputArea.setText(
+                            "No medical records found."
+                    );
+
+                    return;
+                }
+
+                StringBuilder builder =
+                        new StringBuilder();
+
+                for (
+                        MedicalRecordResponse record
+                        : records
+                ) {
+
+                    builder
+                            .append(
+                                    formatMedicalRecord(
+                                            record
+                                    )
+                            )
+                            .append(
+                                    "-----------------------------\n"
+                            );
+                }
+
+                outputArea.setText(
+                        builder.toString()
+                );
+
+            } catch (ApiException exception) {
+
+                outputArea.setText(
+                        "Unable to load medical records.\n\n" +
+                                exception.getMessage()
+                );
+            }
+        });
+
+        VBox layout =
+                new VBox(15);
+
+        layout.setPadding(
+                new Insets(20)
+        );
+
+        layout.setAlignment(
+                Pos.CENTER
+        );
+
+        layout.setStyle(
+                "-fx-background-color: #664C36;"
+        );
 
         double fieldWidth = 300;
 
-        patientIdField.setMaxWidth(fieldWidth);
-        recordIdField.setMaxWidth(fieldWidth);
-        diagnosisField.setMaxWidth(fieldWidth);
-        costField.setMaxWidth(fieldWidth);
+        recordIdField
+                .setMaxWidth(fieldWidth);
+
+        appointmentIdField
+                .setMaxWidth(fieldWidth);
+
+        diagnosisField
+                .setMaxWidth(fieldWidth);
+
+        treatmentField
+                .setMaxWidth(fieldWidth);
+
+        costField
+                .setMaxWidth(fieldWidth);
 
         layout.getChildren().addAll(
                 titleLabel,
                 recordIdField,
-                patientIdField,
+                appointmentIdField,
                 diagnosisField,
+                treatmentField,
                 costField,
                 addButton,
                 viewButton,
                 outputArea
         );
 
-        Scene scene = new Scene(layout, 550, 700);
-        stage.setTitle("Medical Record Management");
+        Scene scene =
+                new Scene(
+                        layout,
+                        550,
+                        730
+                );
+
+        stage.setTitle(
+                "Medical Record Management"
+        );
+
         stage.setScene(scene);
         stage.show();
+    }
+
+    private String formatMedicalRecord(
+            MedicalRecordResponse record
+    ) {
+
+        return "Record ID: "
+                + record.getRecordId()
+                + "\n"
+                + "Appointment ID: "
+                + record.getAppointmentId()
+                + "\n"
+                + "Patient ID: "
+                + record.getPatientId()
+                + "\n"
+                + "Doctor ID: "
+                + record.getDoctorId()
+                + "\n"
+                + "Diagnosis: "
+                + record.getDiagnosis()
+                + "\n"
+                + "Treatment: "
+                + record.getTreatment()
+                + "\n"
+                + "Treatment Cost: Rs. "
+                + record.getTreatmentCost()
+                + "\n";
     }
 }

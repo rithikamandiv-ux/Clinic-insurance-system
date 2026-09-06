@@ -1,9 +1,9 @@
 package com.rithika.clinicsystem.ui;
 
-import com.rithika.clinicsystem.model.InsuranceClaim;
-import com.rithika.clinicsystem.model.MedicalRecord;
-import com.rithika.clinicsystem.service.ClinicService;
-import com.rithika.clinicsystem.service.InsuranceService;
+import com.rithika.clinicsystem.api.ApiException;
+import com.rithika.clinicsystem.api.InsuranceClaimApiService;
+import com.rithika.clinicsystem.dto.InsuranceClaimRequest;
+import com.rithika.clinicsystem.dto.InsuranceClaimResponse;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,38 +14,61 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.List;
+
 public class ClaimUI {
 
-    private final ClinicService clinicService;
-    private final InsuranceService insuranceService;
+    private final InsuranceClaimApiService insuranceClaimApiService;
 
-    public ClaimUI(ClinicService clinicService, InsuranceService insuranceService) {
-        this.clinicService = clinicService;
-        this.insuranceService = insuranceService;
+    public ClaimUI(
+            InsuranceClaimApiService insuranceClaimApiService
+    ) {
+        this.insuranceClaimApiService =
+                insuranceClaimApiService;
     }
 
     public void show() {
+
         Stage stage = new Stage();
 
-        Label titleLabel = new Label("Claim Management");
+        Label titleLabel =
+                new Label("Claim Management");
+
         titleLabel.setStyle(
                 "-fx-text-fill: white;" +
                         "-fx-font-size: 24px;" +
                         "-fx-font-weight: bold;"
         );
 
-        TextField claimIdField = new TextField();
-        claimIdField.setPromptText("Enter Claim ID");
+        TextField claimIdField =
+                new TextField();
 
-        TextField recordIdField = new TextField();
-        recordIdField.setPromptText("Enter Medical Record ID");
+        claimIdField.setPromptText(
+                "Enter Claim ID"
+        );
 
-        TextField processClaimIdField = new TextField();
-        processClaimIdField.setPromptText("Enter Claim ID to Process");
+        TextField medicalRecordIdField =
+                new TextField();
 
-        Button createClaimButton = new Button("Create Claim");
-        Button processClaimButton = new Button("Process Claim");
-        Button viewClaimsButton = new Button("View Claims");
+        medicalRecordIdField.setPromptText(
+                "Enter Medical Record ID"
+        );
+
+        TextField processClaimIdField =
+                new TextField();
+
+        processClaimIdField.setPromptText(
+                "Enter Claim ID to Process"
+        );
+
+        Button createClaimButton =
+                new Button("Create Claim");
+
+        Button processClaimButton =
+                new Button("Process Claim");
+
+        Button viewClaimsButton =
+                new Button("View Claims");
 
         createClaimButton.setPrefWidth(220);
         processClaimButton.setPrefWidth(220);
@@ -61,117 +84,192 @@ public class ClaimUI {
         processClaimButton.setStyle(buttonStyle);
         viewClaimsButton.setStyle(buttonStyle);
 
-        TextArea outputArea = new TextArea();
+        TextArea outputArea =
+                new TextArea();
+
         outputArea.setEditable(false);
-        outputArea.setPrefHeight(250);
+        outputArea.setPrefHeight(270);
+
         outputArea.setStyle(
                 "-fx-control-inner-background: #111111;" +
                         "-fx-text-fill: white;" +
                         "-fx-font-size: 13px;"
         );
 
-        createClaimButton.setOnAction(e -> {
-            String claimId = claimIdField.getText().trim();
-            String recordId = recordIdField.getText().trim();
+        /*
+         * CREATE CLAIM
+         */
+        createClaimButton.setOnAction(event -> {
 
-            if (claimId.isEmpty() || recordId.isEmpty()) {
-                outputArea.setText("Please fill in all required fields.");
-                return;
-            }
+            String claimId =
+                    claimIdField
+                            .getText()
+                            .trim();
 
-            if (insuranceService.findClaimById(claimId) != null) {
-                outputArea.setText("Claim ID already exists.");
-                return;
-            }
+            String medicalRecordId =
+                    medicalRecordIdField
+                            .getText()
+                            .trim();
 
-            MedicalRecord record = clinicService.findMedicalRecordById(recordId);
+            if (
+                    claimId.isEmpty()
+                            || medicalRecordId.isEmpty()
+            ) {
 
-            if (record == null) {
-                outputArea.setText("Medical record not found.");
-                return;
-            }
-
-            if (!insuranceService.hasPolicy(record.getPatientId())) {
-                outputArea.setText("This patient does not have an insurance policy.");
-                return;
-            }
-
-            InsuranceClaim claim = insuranceService.createClaimFromRecord(claimId, record);
-
-            if (claim != null) {
                 outputArea.setText(
-                        "Claim created successfully.\n" +
-                                "Claim ID: " + claim.getClaimId() + "\n" +
-                                "Patient ID: " + claim.getPatientId() + "\n" +
-                                "Record ID: " + claim.getRecordId() + "\n" +
-                                "Claim Amount: Rs. " + claim.getClaimAmount() + "\n" +
-                                "Status: " + claim.getClaimStatus()
+                        "Please fill in all required fields."
+                );
+
+                return;
+            }
+
+            InsuranceClaimRequest request =
+                    new InsuranceClaimRequest(
+                            claimId,
+                            medicalRecordId
+                    );
+
+            try {
+
+                InsuranceClaimResponse response =
+                        insuranceClaimApiService
+                                .createClaim(request);
+
+                outputArea.setText(
+                        "Claim created successfully.\n\n"
+                                + formatClaim(response)
+                );
+
+                claimIdField.clear();
+                medicalRecordIdField.clear();
+
+            } catch (ApiException exception) {
+
+                outputArea.setText(
+                        "Unable to create claim.\n\n"
+                                + exception.getMessage()
                 );
             }
-
-            claimIdField.clear();
-            recordIdField.clear();
         });
 
-        processClaimButton.setOnAction(e -> {
-            String claimId = processClaimIdField.getText().trim();
+        /*
+         * PROCESS CLAIM
+         */
+        processClaimButton.setOnAction(event -> {
+
+            String claimId =
+                    processClaimIdField
+                            .getText()
+                            .trim();
 
             if (claimId.isEmpty()) {
-                outputArea.setText("Please enter a claim ID to process.");
+
+                outputArea.setText(
+                        "Please enter a Claim ID to process."
+                );
+
                 return;
             }
 
-            InsuranceClaim claim = insuranceService.findClaimById(claimId);
+            try {
 
-            if (claim == null) {
-                outputArea.setText("Claim not found.");
-                return;
+                InsuranceClaimResponse response =
+                        insuranceClaimApiService
+                                .processClaim(
+                                        claimId
+                                );
+
+                outputArea.setText(
+                        "Claim processed successfully.\n\n"
+                                + formatClaim(response)
+                );
+
+                processClaimIdField.clear();
+
+            } catch (ApiException exception) {
+
+                outputArea.setText(
+                        "Unable to process claim.\n\n"
+                                + exception.getMessage()
+                );
             }
-
-            insuranceService.processClaim(claimId);
-
-            outputArea.setText(
-                    "Claim processed successfully.\n" +
-                            "Claim ID: " + claim.getClaimId() + "\n" +
-                            "Updated Status: " + claim.getClaimStatus()
-            );
-
-            processClaimIdField.clear();
         });
 
-        viewClaimsButton.setOnAction(e -> {
-            if (insuranceService.getClaims().isEmpty()) {
-                outputArea.setText("No claims found.");
-                return;
+        /*
+         * VIEW CLAIMS
+         */
+        viewClaimsButton.setOnAction(event -> {
+
+            try {
+
+                List<InsuranceClaimResponse> claims =
+                        insuranceClaimApiService
+                                .getAllClaims();
+
+                if (claims.isEmpty()) {
+
+                    outputArea.setText(
+                            "No insurance claims found."
+                    );
+
+                    return;
+                }
+
+                StringBuilder builder =
+                        new StringBuilder();
+
+                for (
+                        InsuranceClaimResponse claim
+                        : claims
+                ) {
+
+                    builder
+                            .append(
+                                    formatClaim(claim)
+                            )
+                            .append(
+                                    "-----------------------------\n"
+                            );
+                }
+
+                outputArea.setText(
+                        builder.toString()
+                );
+
+            } catch (ApiException exception) {
+
+                outputArea.setText(
+                        "Unable to load claims.\n\n"
+                                + exception.getMessage()
+                );
             }
-
-            StringBuilder builder = new StringBuilder();
-
-            for (InsuranceClaim claim : insuranceService.getClaims()) {
-                builder.append("Claim ID: ").append(claim.getClaimId()).append("\n");
-                builder.append("Patient ID: ").append(claim.getPatientId()).append("\n");
-                builder.append("Record ID: ").append(claim.getRecordId()).append("\n");
-                builder.append("Claim Amount: Rs. ").append(claim.getClaimAmount()).append("\n");
-                builder.append("Claim Status: ").append(claim.getClaimStatus()).append("\n");
-                builder.append("-----------------------------\n");
-            }
-
-            outputArea.setText(builder.toString());
         });
 
-        VBox layout = new VBox(15);
-        layout.setPadding(new Insets(20));
-        layout.setAlignment(Pos.CENTER);
-        layout.setStyle("-fx-background-color: #664C36;");
+        VBox layout =
+                new VBox(15);
+
+        layout.setPadding(
+                new Insets(20)
+        );
+
+        layout.setAlignment(
+                Pos.CENTER
+        );
+
+        layout.setStyle(
+                "-fx-background-color: #664C36;"
+        );
 
         double fieldWidth = 300;
+
         claimIdField.setMaxWidth(fieldWidth);
-        recordIdField.setMaxWidth(fieldWidth);
+        medicalRecordIdField.setMaxWidth(fieldWidth);
+        processClaimIdField.setMaxWidth(fieldWidth);
 
         layout.getChildren().addAll(
                 titleLabel,
                 claimIdField,
-                recordIdField,
+                medicalRecordIdField,
                 createClaimButton,
                 processClaimIdField,
                 processClaimButton,
@@ -179,9 +277,39 @@ public class ClaimUI {
                 outputArea
         );
 
-        Scene scene = new Scene(layout, 550, 700);
-        stage.setTitle("Claim Management");
+        Scene scene =
+                new Scene(
+                        layout,
+                        550,
+                        700
+                );
+
+        stage.setTitle(
+                "Claim Management"
+        );
+
         stage.setScene(scene);
         stage.show();
+    }
+
+    private String formatClaim(
+            InsuranceClaimResponse claim
+    ) {
+
+        return "Claim ID: "
+                + claim.getClaimId()
+                + "\n"
+                + "Medical Record ID: "
+                + claim.getMedicalRecordId()
+                + "\n"
+                + "Patient ID: "
+                + claim.getPatientId()
+                + "\n"
+                + "Claim Amount: Rs. "
+                + claim.getClaimAmount()
+                + "\n"
+                + "Status: "
+                + claim.getStatus()
+                + "\n";
     }
 }

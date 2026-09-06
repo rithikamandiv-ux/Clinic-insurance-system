@@ -1,47 +1,78 @@
 package com.rithika.clinicsystem.ui;
 
-import com.rithika.clinicsystem.model.Doctor;
-import com.rithika.clinicsystem.service.ClinicService;
-import com.rithika.clinicsystem.util.FileUtil;
+import com.rithika.clinicsystem.api.ApiException;
+import com.rithika.clinicsystem.api.DoctorApiService;
+import com.rithika.clinicsystem.dto.DoctorRequest;
+import com.rithika.clinicsystem.dto.DoctorResponse;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 public class DoctorUI {
 
-    private final ClinicService clinicService;
+    private final DoctorApiService doctorApiService;
 
-    public DoctorUI(ClinicService clinicService) {
-        this.clinicService = clinicService;
+    public DoctorUI(
+            DoctorApiService doctorApiService
+    ) {
+        this.doctorApiService = doctorApiService;
     }
 
     public void show() {
+
         Stage stage = new Stage();
 
-        Label titleLabel = new Label("Doctor Management");
+        Label titleLabel =
+                new Label("Doctor Management");
+
         titleLabel.setStyle(
                 "-fx-text-fill: white;" +
                         "-fx-font-size: 24px;" +
                         "-fx-font-weight: bold;"
         );
 
-        TextField doctorIdField = new TextField();
-        doctorIdField.setPromptText("Enter Doctor ID");
+        TextField doctorIdField =
+                new TextField();
 
-        TextField nameField = new TextField();
-        nameField.setPromptText("Enter Doctor Name");
+        doctorIdField.setPromptText(
+                "Enter Doctor ID"
+        );
 
-        TextField specializationField = new TextField();
-        specializationField.setPromptText("Enter Specialization");
+        TextField nameField =
+                new TextField();
 
-        TextField feeField = new TextField();
-        feeField.setPromptText("Enter Consultation Fee");
+        nameField.setPromptText(
+                "Enter Doctor Name"
+        );
 
-        Button addButton = new Button("Add Doctor");
-        Button viewButton = new Button("View Doctors");
+        TextField specializationField =
+                new TextField();
+
+        specializationField.setPromptText(
+                "Enter Specialization"
+        );
+
+        TextField feeField =
+                new TextField();
+
+        feeField.setPromptText(
+                "Enter Consultation Fee"
+        );
+
+        Button addButton =
+                new Button("Add Doctor");
+
+        Button viewButton =
+                new Button("View Doctors");
 
         addButton.setPrefWidth(200);
         viewButton.setPrefWidth(200);
@@ -60,80 +91,224 @@ public class DoctorUI {
                         "-fx-border-width: 1.5;"
         );
 
-        TextArea outputArea = new TextArea();
+        TextArea outputArea =
+                new TextArea();
+
         outputArea.setEditable(false);
         outputArea.setPrefHeight(220);
+
         outputArea.setStyle(
                 "-fx-control-inner-background: #111111;" +
                         "-fx-text-fill: white;" +
                         "-fx-font-size: 13px;"
         );
 
-        addButton.setOnAction(e -> {
-            String doctorId = doctorIdField.getText().trim();
-            String name = nameField.getText().trim();
-            String specialization = specializationField.getText().trim();
-            String feeText = feeField.getText().trim();
+        /*
+         * ADD DOCTOR
+         */
+        addButton.setOnAction(event -> {
 
-            if (doctorId.isEmpty() || name.isEmpty() || specialization.isEmpty() || feeText.isEmpty()) {
-                outputArea.setText("Please fill in all fields.");
+            String doctorId =
+                    doctorIdField
+                            .getText()
+                            .trim();
+
+            String name =
+                    nameField
+                            .getText()
+                            .trim();
+
+            String specialization =
+                    specializationField
+                            .getText()
+                            .trim();
+
+            String feeText =
+                    feeField
+                            .getText()
+                            .trim();
+
+            if (
+                    doctorId.isEmpty()
+                            || name.isEmpty()
+                            || specialization.isEmpty()
+                            || feeText.isEmpty()
+            ) {
+
+                outputArea.setText(
+                        "Please fill in all fields."
+                );
+
                 return;
             }
 
-            double consultationFee;
+            BigDecimal consultationFee;
+
             try {
-                consultationFee = Double.parseDouble(feeText);
-            } catch (NumberFormatException ex) {
-                outputArea.setText("Consultation fee must be a valid number.");
+
+                consultationFee =
+                        new BigDecimal(feeText);
+
+            } catch (NumberFormatException exception) {
+
+                outputArea.setText(
+                        "Consultation fee must be a valid number."
+                );
+
                 return;
             }
 
-            if (clinicService.findDoctorById(doctorId) != null) {
-                outputArea.setText("Doctor ID already exists.");
+            if (consultationFee.compareTo(BigDecimal.ZERO) < 0) {
+
+                outputArea.setText(
+                        "Consultation fee cannot be negative."
+                );
+
                 return;
             }
 
-            Doctor doctor = new Doctor(doctorId, name, specialization, consultationFee);
-            clinicService.addDoctor(doctor);
-            FileUtil.saveDoctors(clinicService.getAllDoctors());
+            DoctorRequest request =
+                    new DoctorRequest(
+                            doctorId,
+                            name,
+                            specialization,
+                            consultationFee
+                    );
 
-            outputArea.setText("Doctor added successfully.");
+            try {
 
-            doctorIdField.clear();
-            nameField.clear();
-            specializationField.clear();
-            feeField.clear();
+                DoctorResponse response =
+                        doctorApiService
+                                .addDoctor(request);
+
+                outputArea.setText(
+                        "Doctor added successfully.\n\n" +
+                                "Doctor ID: "
+                                + response.getDoctorId()
+                                + "\n" +
+                                "Name: "
+                                + response.getDoctorName()
+                                + "\n" +
+                                "Specialization: "
+                                + response.getSpecialization()
+                                + "\n" +
+                                "Consultation Fee: "
+                                + response.getConsultationFee()
+                );
+
+                doctorIdField.clear();
+                nameField.clear();
+                specializationField.clear();
+                feeField.clear();
+
+            } catch (ApiException exception) {
+
+                outputArea.setText(
+                        "Unable to add doctor.\n\n" +
+                                exception.getMessage()
+                );
+            }
         });
 
-        viewButton.setOnAction(e -> {
-            if (clinicService.getAllDoctors().isEmpty()) {
-                outputArea.setText("No doctors found.");
-                return;
+        /*
+         * VIEW DOCTORS
+         */
+        viewButton.setOnAction(event -> {
+
+            try {
+
+                List<DoctorResponse> doctors =
+                        doctorApiService
+                                .getAllDoctors();
+
+                if (doctors.isEmpty()) {
+
+                    outputArea.setText(
+                            "No doctors found."
+                    );
+
+                    return;
+                }
+
+                StringBuilder builder =
+                        new StringBuilder();
+
+                for (DoctorResponse doctor : doctors) {
+
+                    builder
+                            .append("Doctor ID: ")
+                            .append(
+                                    doctor.getDoctorId()
+                            )
+                            .append("\n");
+
+                    builder
+                            .append("Name: ")
+                            .append(
+                                    doctor.getDoctorName()
+                            )
+                            .append("\n");
+
+                    builder
+                            .append("Specialization: ")
+                            .append(
+                                    doctor.getSpecialization()
+                            )
+                            .append("\n");
+
+                    builder
+                            .append("Consultation Fee: ")
+                            .append(
+                                    doctor.getConsultationFee()
+                            )
+                            .append("\n");
+
+                    builder.append(
+                            "-----------------------------\n"
+                    );
+                }
+
+                outputArea.setText(
+                        builder.toString()
+                );
+
+            } catch (ApiException exception) {
+
+                outputArea.setText(
+                        "Unable to load doctors.\n\n" +
+                                exception.getMessage()
+                );
             }
-
-            StringBuilder builder = new StringBuilder();
-
-            for (Doctor doctor : clinicService.getAllDoctors()) {
-                builder.append("Doctor ID: ").append(doctor.getDoctorId()).append("\n");
-                builder.append("Name: ").append(doctor.getDoctorName()).append("\n");
-                builder.append("Specialization: ").append(doctor.getSpecialization()).append("\n");
-                builder.append("Consultation Fee: ").append(doctor.getConsultationFee()).append("\n");
-                builder.append("-----------------------------\n");
-            }
-
-            outputArea.setText(builder.toString());
         });
 
-        VBox layout = new VBox(15);
-        layout.setPadding(new Insets(20));
-        layout.setAlignment(Pos.CENTER);
-        layout.setStyle("-fx-background-color: #664C36;");
+        VBox layout =
+                new VBox(15);
+
+        layout.setPadding(
+                new Insets(20)
+        );
+
+        layout.setAlignment(
+                Pos.CENTER
+        );
+
+        layout.setStyle(
+                "-fx-background-color: #664C36;"
+        );
+
         double fieldWidth = 300;
 
-        doctorIdField.setMaxWidth(fieldWidth);
-        nameField.setMaxWidth(fieldWidth);
-        specializationField.setMaxWidth(fieldWidth);
-        feeField.setMaxWidth(fieldWidth);
+        doctorIdField
+                .setMaxWidth(fieldWidth);
+
+        nameField
+                .setMaxWidth(fieldWidth);
+
+        specializationField
+                .setMaxWidth(fieldWidth);
+
+        feeField
+                .setMaxWidth(fieldWidth);
 
         layout.getChildren().addAll(
                 titleLabel,
@@ -146,9 +321,19 @@ public class DoctorUI {
                 outputArea
         );
 
-        Scene scene = new Scene(layout, 500, 620);
-        stage.setTitle("Doctor Management");
+        Scene scene =
+                new Scene(
+                        layout,
+                        500,
+                        620
+                );
+
+        stage.setTitle(
+                "Doctor Management"
+        );
+
         stage.setScene(scene);
+
         stage.show();
     }
 }
