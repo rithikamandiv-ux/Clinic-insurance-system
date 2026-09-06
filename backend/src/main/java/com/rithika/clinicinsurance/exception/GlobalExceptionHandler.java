@@ -16,6 +16,67 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidMedicalRecordAppointmentException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleInvalidMedicalRecordAppointment(
+            InvalidMedicalRecordAppointmentException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+    @ExceptionHandler(MedicalRecordNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleMedicalRecordNotFound(
+            MedicalRecordNotFoundException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    @ExceptionHandler(MedicalRecordAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleMedicalRecordAlreadyExists(
+            MedicalRecordAlreadyExistsException exception,
+            HttpServletRequest request
+    ) {
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
     @ExceptionHandler(InvalidAppointmentStatusTransitionException.class)
     public ResponseEntity<ApiErrorResponse>
     handleInvalidAppointmentStatusTransition(
