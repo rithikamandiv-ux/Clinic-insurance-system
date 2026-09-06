@@ -1,9 +1,5 @@
 package com.rithika.clinicsystem.ui;
 
-import com.rithika.clinicsystem.model.Doctor;
-import com.rithika.clinicsystem.service.ClinicService;
-import com.rithika.clinicsystem.service.InsuranceService;
-import com.rithika.clinicsystem.util.FileUtil;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -26,10 +22,6 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        ClinicService clinicService = new ClinicService();
-
-        InsuranceService insuranceService = new InsuranceService();
-
         ApiClient apiClient =
                 new ApiClient();
 
@@ -50,11 +42,6 @@ public class MainApp extends Application {
 
         InsuranceClaimApiService insuranceClaimApiService =
                 new InsuranceClaimApiService(apiClient);
-
-        // Load saved data into memory
-        clinicService.setPatients(FileUtil.loadPatients());
-        clinicService.setDoctors(FileUtil.loadDoctors());
-        clinicService.setAppointments(FileUtil.loadAppointments());
 
         //UI starting point
         Label titleLabel = new Label("Clinic Insurance System");
