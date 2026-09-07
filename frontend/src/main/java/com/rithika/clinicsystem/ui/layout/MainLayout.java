@@ -22,6 +22,8 @@ import com.rithika.clinicsystem.api.DoctorApiService;
 import com.rithika.clinicsystem.ui.doctor.DoctorView;
 import com.rithika.clinicsystem.api.AppointmentApiService;
 import com.rithika.clinicsystem.ui.appointment.AppointmentView;
+import com.rithika.clinicsystem.api.MedicalRecordApiService;
+import com.rithika.clinicsystem.ui.medicalrecord.MedicalRecordView;
 
 public class MainLayout {
 
@@ -31,13 +33,15 @@ public class MainLayout {
     private final PatientApiService patientApiService;
     private final DoctorApiService doctorApiService;
     private final AppointmentApiService appointmentApiService;
+    private final MedicalRecordApiService medicalRecordApiService;
 
     private final List<Button> navigationButtons;
 
     public MainLayout(
             PatientApiService patientApiService,
             DoctorApiService doctorApiService,
-            AppointmentApiService appointmentApiService
+            AppointmentApiService appointmentApiService,
+            MedicalRecordApiService medicalRecordApiService
     ) {
 
         this.patientApiService =
@@ -48,6 +52,9 @@ public class MainLayout {
 
         this.appointmentApiService =
                 appointmentApiService;
+
+        this.medicalRecordApiService =
+                medicalRecordApiService;
 
         root =
                 new BorderPane();
@@ -116,6 +123,19 @@ public class MainLayout {
 
         setContent(
                 appointmentView.getView()
+        );
+    }
+
+    private void showMedicalRecords() {
+
+        MedicalRecordView medicalRecordView =
+                new MedicalRecordView(
+                        medicalRecordApiService,
+                        appointmentApiService
+                );
+
+        setContent(
+                medicalRecordView.getView()
         );
     }
 
@@ -284,10 +304,7 @@ public class MainLayout {
                     recordsButton
             );
 
-            showTemporaryPage(
-                    "Medical Records",
-                    "Medical record management will be migrated into this view."
-            );
+            showMedicalRecords();
         });
 
 
