@@ -630,3 +630,30 @@
     -fx-background-color: -color-primary;
     -fx-border-color: -color-primary;
 }
+
+/* =========================================================
+   SEMANTIC ACTION BUTTONS
+   ========================================================= */
+
+.success-button {
+    -fx-background-color: -color-success;
+    -fx-text-fill: -color-white;
+    -fx-border-color: transparent;
+}
+
+.success-button:hover {
+    -fx-background-color:
+        derive(-color-success, 8%);
+}
+
+
+.warning-button {
+    -fx-background-color: -color-warning;
+    -fx-text-fill: -color-white;
+    -fx-border-color: transparent;
+}
+
+.warning-button:hover {
+    -fx-background-color:
+        derive(-color-warning, 8%);
+}

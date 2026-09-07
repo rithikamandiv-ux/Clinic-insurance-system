@@ -4,6 +4,7 @@ import com.rithika.clinicsystem.api.ApiClient;
 import com.rithika.clinicsystem.api.PatientApiService;
 import com.rithika.clinicsystem.ui.layout.MainLayout;
 import com.rithika.clinicsystem.api.DoctorApiService;
+import com.rithika.clinicsystem.api.AppointmentApiService;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -38,6 +39,11 @@ public class MainApp extends Application {
                         apiClient
                 );
 
+        AppointmentApiService appointmentApiService =
+                new AppointmentApiService(
+                        apiClient
+                );
+
 
         /*
          * MAIN APPLICATION LAYOUT
@@ -46,7 +52,8 @@ public class MainApp extends Application {
         MainLayout mainLayout =
                 new MainLayout(
                         patientApiService,
-                        doctorApiService
+                        doctorApiService,
+                        appointmentApiService
 
                 );
 

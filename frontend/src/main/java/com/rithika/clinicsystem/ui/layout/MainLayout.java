@@ -20,6 +20,8 @@ import com.rithika.clinicsystem.api.PatientApiService;
 import com.rithika.clinicsystem.ui.patient.PatientView;
 import com.rithika.clinicsystem.api.DoctorApiService;
 import com.rithika.clinicsystem.ui.doctor.DoctorView;
+import com.rithika.clinicsystem.api.AppointmentApiService;
+import com.rithika.clinicsystem.ui.appointment.AppointmentView;
 
 public class MainLayout {
 
@@ -28,12 +30,14 @@ public class MainLayout {
 
     private final PatientApiService patientApiService;
     private final DoctorApiService doctorApiService;
+    private final AppointmentApiService appointmentApiService;
 
     private final List<Button> navigationButtons;
 
     public MainLayout(
             PatientApiService patientApiService,
-            DoctorApiService doctorApiService
+            DoctorApiService doctorApiService,
+            AppointmentApiService appointmentApiService
     ) {
 
         this.patientApiService =
@@ -41,6 +45,9 @@ public class MainLayout {
 
         this.doctorApiService =
                 doctorApiService;
+
+        this.appointmentApiService =
+                appointmentApiService;
 
         root =
                 new BorderPane();
@@ -95,6 +102,20 @@ public class MainLayout {
 
         setContent(
                 doctorView.getView()
+        );
+    }
+
+    private void showAppointments() {
+
+        AppointmentView appointmentView =
+                new AppointmentView(
+                        appointmentApiService,
+                        patientApiService,
+                        doctorApiService
+                );
+
+        setContent(
+                appointmentView.getView()
         );
     }
 
@@ -253,10 +274,7 @@ public class MainLayout {
                     appointmentsButton
             );
 
-            showTemporaryPage(
-                    "Appointments",
-                    "Appointment management will be migrated into this view."
-            );
+            showAppointments();
         });
 
 
