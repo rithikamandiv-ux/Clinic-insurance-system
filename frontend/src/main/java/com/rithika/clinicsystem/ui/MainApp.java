@@ -6,6 +6,8 @@ import com.rithika.clinicsystem.ui.layout.MainLayout;
 import com.rithika.clinicsystem.api.DoctorApiService;
 import com.rithika.clinicsystem.api.AppointmentApiService;
 import com.rithika.clinicsystem.api.MedicalRecordApiService;
+import com.rithika.clinicsystem.api.InsurancePolicyApiService;
+import com.rithika.clinicsystem.api.InsuranceClaimApiService;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -50,6 +52,16 @@ public class MainApp extends Application {
                         apiClient
                 );
 
+        InsurancePolicyApiService insurancePolicyApiService =
+                new InsurancePolicyApiService(
+                        apiClient
+                );
+
+        InsuranceClaimApiService insuranceClaimApiService =
+                new InsuranceClaimApiService(
+                        apiClient
+                );
+
 
         /*
          * MAIN APPLICATION LAYOUT
@@ -60,7 +72,9 @@ public class MainApp extends Application {
                         patientApiService,
                         doctorApiService,
                         appointmentApiService,
-                        medicalRecordApiService
+                        medicalRecordApiService,
+                        insurancePolicyApiService,
+                        insuranceClaimApiService
 
                 );
 

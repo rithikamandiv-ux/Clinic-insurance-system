@@ -24,6 +24,10 @@ import com.rithika.clinicsystem.api.AppointmentApiService;
 import com.rithika.clinicsystem.ui.appointment.AppointmentView;
 import com.rithika.clinicsystem.api.MedicalRecordApiService;
 import com.rithika.clinicsystem.ui.medicalrecord.MedicalRecordView;
+import com.rithika.clinicsystem.api.InsurancePolicyApiService;
+import com.rithika.clinicsystem.ui.policy.InsurancePolicyView;
+import com.rithika.clinicsystem.api.InsuranceClaimApiService;
+import com.rithika.clinicsystem.ui.claim.InsuranceClaimView;
 
 public class MainLayout {
 
@@ -34,6 +38,8 @@ public class MainLayout {
     private final DoctorApiService doctorApiService;
     private final AppointmentApiService appointmentApiService;
     private final MedicalRecordApiService medicalRecordApiService;
+    private final InsurancePolicyApiService insurancePolicyApiService;
+    private final InsuranceClaimApiService insuranceClaimApiService;
 
     private final List<Button> navigationButtons;
 
@@ -41,7 +47,9 @@ public class MainLayout {
             PatientApiService patientApiService,
             DoctorApiService doctorApiService,
             AppointmentApiService appointmentApiService,
-            MedicalRecordApiService medicalRecordApiService
+            MedicalRecordApiService medicalRecordApiService,
+            InsurancePolicyApiService insurancePolicyApiService,
+            InsuranceClaimApiService insuranceClaimApiService
     ) {
 
         this.patientApiService =
@@ -55,6 +63,12 @@ public class MainLayout {
 
         this.medicalRecordApiService =
                 medicalRecordApiService;
+
+        this.insurancePolicyApiService =
+                insurancePolicyApiService;
+
+        this.insuranceClaimApiService =
+                insuranceClaimApiService;
 
         root =
                 new BorderPane();
@@ -136,6 +150,32 @@ public class MainLayout {
 
         setContent(
                 medicalRecordView.getView()
+        );
+    }
+
+    private void showPolicies() {
+
+        InsurancePolicyView insurancePolicyView =
+                new InsurancePolicyView(
+                        insurancePolicyApiService,
+                        patientApiService
+                );
+
+        setContent(
+                insurancePolicyView.getView()
+        );
+    }
+
+    private void showClaims() {
+
+        InsuranceClaimView insuranceClaimView =
+                new InsuranceClaimView(
+                        insuranceClaimApiService,
+                        medicalRecordApiService
+                );
+
+        setContent(
+                insuranceClaimView.getView()
         );
     }
 
@@ -314,10 +354,7 @@ public class MainLayout {
                     policiesButton
             );
 
-            showTemporaryPage(
-                    "Insurance Policies",
-                    "Insurance policy management will be migrated into this view."
-            );
+            showPolicies();
         });
 
 
@@ -327,10 +364,7 @@ public class MainLayout {
                     claimsButton
             );
 
-            showTemporaryPage(
-                    "Insurance Claims",
-                    "Insurance claim management will be migrated into this view."
-            );
+            showClaims();
         });
 
 
