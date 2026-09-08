@@ -932,6 +932,15 @@ public class PatientView {
 
 
         if (
+                !InputValidator
+                        .isValidPatientId(patientId)
+        ) {
+
+            return "Patient ID must follow the format P###, for example P001.";
+        }
+
+
+        if (
                 InputValidator
                         .isEmpty(patientName)
         ) {

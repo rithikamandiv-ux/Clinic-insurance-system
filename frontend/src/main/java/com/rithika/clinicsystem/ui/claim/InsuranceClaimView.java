@@ -7,6 +7,7 @@ import com.rithika.clinicsystem.dto.InsuranceClaimRequest;
 import com.rithika.clinicsystem.dto.InsuranceClaimResponse;
 import com.rithika.clinicsystem.dto.MedicalRecordResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.InputValidator;
 
 
 import javafx.beans.property.SimpleStringProperty;
@@ -954,14 +955,18 @@ public class InsuranceClaimView {
             MedicalRecordResponse medicalRecord
     ) {
 
-        /*
-         * Strict CL### validation will be added later
-         * together with all other ID formats.
-         */
-
         if (claimId.isBlank()) {
 
             return "Claim ID is required.";
+        }
+
+
+        if (
+                !InputValidator
+                        .isValidClaimId(claimId)
+        ) {
+
+            return "Claim ID must follow the format CL###, for example CL001.";
         }
 
 

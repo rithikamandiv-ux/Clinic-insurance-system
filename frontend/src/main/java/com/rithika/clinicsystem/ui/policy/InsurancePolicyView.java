@@ -7,6 +7,7 @@ import com.rithika.clinicsystem.dto.InsurancePolicyRequest;
 import com.rithika.clinicsystem.dto.InsurancePolicyResponse;
 import com.rithika.clinicsystem.dto.PatientResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -1170,6 +1171,15 @@ public class InsurancePolicyView {
         if (policyId.isBlank()) {
 
             return "Policy ID is required.";
+        }
+
+
+        if (
+                !InputValidator
+                        .isValidPolicyId(policyId)
+        ) {
+
+            return "Policy ID must follow the format POL###, for example POL001.";
         }
 
 

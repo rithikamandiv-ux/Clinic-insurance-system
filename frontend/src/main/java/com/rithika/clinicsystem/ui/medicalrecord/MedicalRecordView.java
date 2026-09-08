@@ -7,6 +7,7 @@ import com.rithika.clinicsystem.dto.AppointmentResponse;
 import com.rithika.clinicsystem.dto.MedicalRecordRequest;
 import com.rithika.clinicsystem.dto.MedicalRecordResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -1382,14 +1383,18 @@ public class MedicalRecordView {
             String treatmentCostText
     ) {
 
-        /*
-         * We are deliberately NOT applying the future
-         * strict MR### ID format here yet.
-         */
-
         if (recordId.isBlank()) {
 
             return "Medical record ID is required.";
+        }
+
+
+        if (
+                !InputValidator
+                        .isValidMedicalRecordId(recordId)
+        ) {
+
+            return "Medical Record ID must follow the format MR###, for example MR001.";
         }
 
 

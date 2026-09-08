@@ -9,6 +9,7 @@ import com.rithika.clinicsystem.dto.AppointmentResponse;
 import com.rithika.clinicsystem.dto.DoctorResponse;
 import com.rithika.clinicsystem.dto.PatientResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -1448,6 +1449,15 @@ public class AppointmentView {
         if (appointmentId.isBlank()) {
 
             return "Appointment ID is required.";
+        }
+
+
+        if (
+                !InputValidator
+                        .isValidAppointmentId(appointmentId)
+        ) {
+
+            return "Appointment ID must follow the format A###, for example A001.";
         }
 
 

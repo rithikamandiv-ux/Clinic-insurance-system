@@ -5,6 +5,7 @@ import com.rithika.clinicsystem.api.DoctorApiService;
 import com.rithika.clinicsystem.dto.DoctorRequest;
 import com.rithika.clinicsystem.dto.DoctorResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -893,6 +894,15 @@ public class DoctorView {
         if (doctorId.isBlank()) {
 
             return "Doctor ID is required.";
+        }
+
+
+        if (
+                !InputValidator
+                        .isValidDoctorId(doctorId)
+        ) {
+
+            return "Doctor ID must follow the format D###, for example D001.";
         }
 
 
