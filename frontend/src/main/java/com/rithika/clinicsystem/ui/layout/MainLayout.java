@@ -450,7 +450,14 @@ public class MainLayout {
     private void showDashboard() {
 
         DashboardView dashboardView =
-                new DashboardView();
+                new DashboardView(
+                        patientApiService,
+                        doctorApiService,
+                        appointmentApiService,
+                        medicalRecordApiService,
+                        insurancePolicyApiService,
+                        insuranceClaimApiService
+                );
 
         setContent(
                 dashboardView.getView()

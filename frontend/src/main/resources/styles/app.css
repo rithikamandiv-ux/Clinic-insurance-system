@@ -657,3 +657,87 @@
     -fx-background-color:
         derive(-color-warning, 8%);
 }
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.dashboard-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.dashboard-scroll-pane > .viewport {
+    -fx-background-color: -color-background;
+}
+
+
+/* ---------------------------------------------------------
+   SUMMARY CARDS
+   --------------------------------------------------------- */
+
+.dashboard-stat-card {
+    -fx-min-height: 145px;
+    -fx-pref-height: 145px;
+}
+
+.dashboard-stat-title {
+    -fx-text-fill: -color-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.dashboard-stat-value {
+    -fx-text-fill: -color-primary;
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+}
+
+.dashboard-stat-description {
+    -fx-text-fill: -color-text-secondary;
+    -fx-font-size: 12px;
+}
+
+
+/* ---------------------------------------------------------
+   OVERVIEW CARDS
+   --------------------------------------------------------- */
+
+.dashboard-overview-card {
+    -fx-min-height: 240px;
+}
+
+.dashboard-overview-row {
+    -fx-padding: 10px 0;
+    -fx-border-color:
+        transparent
+        transparent
+        rgba(36, 58, 115, 0.08)
+        transparent;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.dashboard-overview-label {
+    -fx-text-fill: -color-text-secondary;
+    -fx-font-size: 14px;
+}
+
+.dashboard-overview-value {
+    -fx-text-fill: -color-primary;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.dashboard-section-title {
+    -fx-padding: 3px 0 4px 0;
+    -fx-min-height: 28px;
+}
+
+.dashboard-refresh-button {
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
+
+    -fx-padding: 10px 20px;
+
+    -fx-alignment: CENTER;
+}
