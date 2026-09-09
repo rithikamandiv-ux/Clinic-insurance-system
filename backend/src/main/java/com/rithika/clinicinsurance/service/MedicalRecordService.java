@@ -10,6 +10,8 @@ import com.rithika.clinicinsurance.model.MedicalRecord;
 import com.rithika.clinicinsurance.repository.AppointmentRepository;
 import com.rithika.clinicinsurance.repository.MedicalRecordRepository;
 import org.springframework.stereotype.Service;
+import com.rithika.clinicinsurance.exception.ResourceInUseException;
+import com.rithika.clinicinsurance.repository.InsuranceClaimRepository;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,13 +21,17 @@ public class MedicalRecordService {
 
     private final MedicalRecordRepository medicalRecordRepository;
     private final AppointmentRepository appointmentRepository;
+    private final InsuranceClaimRepository insuranceClaimRepository;
 
     public MedicalRecordService(
             MedicalRecordRepository medicalRecordRepository,
-            AppointmentRepository appointmentRepository
+            AppointmentRepository appointmentRepository,
+            InsuranceClaimRepository insuranceClaimRepository
     ) {
+
         this.medicalRecordRepository = medicalRecordRepository;
         this.appointmentRepository = appointmentRepository;
+        this.insuranceClaimRepository = insuranceClaimRepository;
     }
 
     public List<MedicalRecord> getAllMedicalRecords() {
@@ -105,6 +111,18 @@ public class MedicalRecordService {
 
         MedicalRecord medicalRecord =
                 getMedicalRecordById(recordId);
+
+        if (
+                insuranceClaimRepository
+                        .existsByMedicalRecord_RecordId(recordId)
+        ) {
+
+            throw new ResourceInUseException(
+                    "Medical record "
+                            + recordId
+                            + " cannot be deleted because an insurance claim references this medical record."
+            );
+        }
 
         medicalRecordRepository.delete(medicalRecord);
     }

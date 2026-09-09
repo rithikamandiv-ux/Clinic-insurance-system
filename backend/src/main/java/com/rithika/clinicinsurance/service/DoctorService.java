@@ -5,6 +5,8 @@ import com.rithika.clinicinsurance.exception.DoctorNotFoundException;
 import com.rithika.clinicinsurance.model.Doctor;
 import com.rithika.clinicinsurance.repository.DoctorRepository;
 import org.springframework.stereotype.Service;
+import com.rithika.clinicinsurance.exception.ResourceInUseException;
+import com.rithika.clinicinsurance.repository.AppointmentRepository;
 
 import java.util.List;
 
@@ -12,9 +14,15 @@ import java.util.List;
 public class DoctorService {
 
     private final DoctorRepository doctorRepository;
+    private final AppointmentRepository appointmentRepository;
 
-    public DoctorService(DoctorRepository doctorRepository) {
+    public DoctorService(
+            DoctorRepository doctorRepository,
+            AppointmentRepository appointmentRepository
+    ) {
+
         this.doctorRepository = doctorRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
     public List<Doctor> getAllDoctors() {
@@ -49,6 +57,18 @@ public class DoctorService {
     public void deleteDoctor(String doctorId) {
 
         Doctor doctor = getDoctorById(doctorId);
+
+        if (
+                appointmentRepository
+                        .existsByDoctor_DoctorId(doctorId)
+        ) {
+
+            throw new ResourceInUseException(
+                    "Doctor "
+                            + doctorId
+                            + " cannot be deleted because existing appointments reference this doctor."
+            );
+        }
 
         doctorRepository.delete(doctor);
     }

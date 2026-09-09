@@ -13,6 +13,8 @@ import com.rithika.clinicinsurance.repository.AppointmentRepository;
 import com.rithika.clinicinsurance.repository.DoctorRepository;
 import com.rithika.clinicinsurance.repository.PatientRepository;
 import org.springframework.stereotype.Service;
+import com.rithika.clinicinsurance.exception.ResourceInUseException;
+import com.rithika.clinicinsurance.repository.MedicalRecordRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,15 +25,19 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    private final MedicalRecordRepository medicalRecordRepository;
 
     public AppointmentService(
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
-            DoctorRepository doctorRepository
+            DoctorRepository doctorRepository,
+            MedicalRecordRepository medicalRecordRepository
     ) {
+
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
+        this.medicalRecordRepository = medicalRecordRepository;
     }
 
     public List<Appointment> getAllAppointments() {
@@ -141,6 +147,18 @@ public class AppointmentService {
     public void deleteAppointment(String appointmentId) {
 
         Appointment appointment = getAppointmentById(appointmentId);
+
+        if (
+                medicalRecordRepository
+                        .existsByAppointment_AppointmentId(appointmentId)
+        ) {
+
+            throw new ResourceInUseException(
+                    "Appointment "
+                            + appointmentId
+                            + " cannot be deleted because a medical record references this appointment."
+            );
+        }
 
         appointmentRepository.delete(appointment);
     }
