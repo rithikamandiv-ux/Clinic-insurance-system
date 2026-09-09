@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 
@@ -12,9 +13,18 @@ public class MedicalRecordRequest {
 
     @NotBlank(message = "Medical record ID is required")
     @Size(max = 20, message = "Medical record ID cannot exceed 20 characters")
+    @Pattern(
+            regexp = "^MR\\d{3}$",
+            message = "Medical Record ID must follow the format MR###, for example MR001."
+    )
     private String recordId;
 
+
     @NotBlank(message = "Appointment ID is required")
+    @Pattern(
+            regexp = "^A\\d{3}$",
+            message = "Appointment ID must follow the format A###, for example A001."
+    )
     private String appointmentId;
 
     @NotBlank(message = "Diagnosis is required")

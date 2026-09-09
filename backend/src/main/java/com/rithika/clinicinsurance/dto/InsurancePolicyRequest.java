@@ -5,16 +5,26 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
+import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
+
 
 public class InsurancePolicyRequest {
 
     @NotBlank(message = "Policy ID is required")
     @Size(max = 20, message = "Policy ID cannot exceed 20 characters")
+    @Pattern(
+            regexp = "^POL\\d{3}$",
+            message = "Policy ID must follow the format POL###, for example POL001."
+    )
     private String policyId;
 
+
     @NotBlank(message = "Patient ID is required")
+    @Pattern(
+            regexp = "^P\\d{3}$",
+            message = "Patient ID must follow the format P###, for example P001."
+    )
     private String patientId;
 
     @NotBlank(message = "Provider name is required")

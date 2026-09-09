@@ -11,6 +11,10 @@ public class PatientRequest {
 
     @NotBlank(message = "Patient ID is required")
     @Size(max = 20, message = "Patient ID cannot exceed 20 characters")
+    @Pattern(
+            regexp = "^P\\d{3}$",
+            message = "Patient ID must follow the format P###, for example P001."
+    )
     private String patientId;
 
     @NotBlank(message = "Patient name is required")

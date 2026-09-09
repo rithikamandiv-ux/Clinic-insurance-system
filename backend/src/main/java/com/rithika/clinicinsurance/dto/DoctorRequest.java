@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 
@@ -12,6 +13,10 @@ public class DoctorRequest {
 
     @NotBlank(message = "Doctor ID is required")
     @Size(max = 20, message = "Doctor ID cannot exceed 20 characters")
+    @Pattern(
+            regexp = "^D\\d{3}$",
+            message = "Doctor ID must follow the format D###, for example D001."
+    )
     private String doctorId;
 
     @NotBlank(message = "Doctor name is required")
