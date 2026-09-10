@@ -13,6 +13,8 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 
+import com.rithika.clinicsystem.dto.ApiErrorResponse;
+
 public class ApiClient {
 
     private static final String BASE_URL = "http://localhost:8080/api";
@@ -254,10 +256,80 @@ public class ApiClient {
             return;
         }
 
-        throw new ApiException(
-                response.body(),
-                statusCode
-        );
+        try {
+
+            ApiErrorResponse errorResponse =
+                    objectMapper.readValue(
+                            response.body(),
+                            ApiErrorResponse.class
+                    );
+
+            String message =
+                    buildErrorMessage(
+                            errorResponse,
+                            statusCode
+                    );
+
+            throw new ApiException(
+                    message,
+                    statusCode,
+                    errorResponse.getFieldErrors()
+            );
+
+        } catch (JsonProcessingException exception) {
+
+            throw new ApiException(
+                    getDefaultErrorMessage(statusCode),
+                    statusCode
+            );
+        }
+    }
+    private String buildErrorMessage(
+            ApiErrorResponse errorResponse,
+            int statusCode
+    ) {
+
+        if (errorResponse.getFieldErrors() != null &&
+                !errorResponse.getFieldErrors().isEmpty()) {
+
+            return String.join(
+                    "\n",
+                    errorResponse
+                            .getFieldErrors()
+                            .values()
+            );
+        }
+
+        if (errorResponse.getMessage() != null &&
+                !errorResponse.getMessage().isBlank()) {
+
+            return errorResponse.getMessage();
+        }
+
+        return getDefaultErrorMessage(statusCode);
+    }
+
+    private String getDefaultErrorMessage(
+            int statusCode
+    ) {
+
+        return switch (statusCode) {
+
+            case 400 ->
+                    "The request could not be processed.";
+
+            case 404 ->
+                    "The requested resource could not be found.";
+
+            case 409 ->
+                    "The operation conflicts with the current state of the resource.";
+
+            case 500 ->
+                    "The server encountered an unexpected error.";
+
+            default ->
+                    "The request failed. Please try again.";
+        };
     }
 
     private <T> T readResponse(
