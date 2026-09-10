@@ -7,6 +7,10 @@ import com.rithika.clinicsystem.dto.InsurancePolicyRequest;
 import com.rithika.clinicsystem.dto.InsurancePolicyResponse;
 import com.rithika.clinicsystem.dto.PatientResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.AsyncTaskRunner;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -30,6 +34,8 @@ public class InsurancePolicyView {
     private final PatientApiService patientApiService;
 
     private final BorderPane root;
+
+    private final BooleanProperty busy;
 
     private final TableView<InsurancePolicyResponse> policyTable;
 
@@ -71,6 +77,9 @@ public class InsurancePolicyView {
         this.patients =
                 FXCollections.observableArrayList();
 
+        this.busy =
+                new SimpleBooleanProperty(false);
+
         buildView();
 
         loadData();
@@ -78,6 +87,16 @@ public class InsurancePolicyView {
 
 
     private void buildView() {
+
+        ProgressIndicator loadingIndicator =
+                new ProgressIndicator();
+
+        loadingIndicator.setPrefSize(18, 18);
+        loadingIndicator.setMinSize(18, 18);
+        loadingIndicator.setMaxSize(18, 18);
+        loadingIndicator.visibleProperty().bind(busy);
+        loadingIndicator.managedProperty().bind(busy);
+
 
         root
                 .getStyleClass()
@@ -204,7 +223,6 @@ public class InsurancePolicyView {
                 .getStyleClass()
                 .add("primary-button");
 
-        editButton.setDisable(true);
 
         editButton.setOnAction(
                 event -> editSelectedPolicy()
@@ -218,36 +236,20 @@ public class InsurancePolicyView {
                 .getStyleClass()
                 .add("danger-button");
 
-        deleteButton.setDisable(true);
 
         deleteButton.setOnAction(
                 event -> deleteSelectedPolicy()
         );
 
 
-        policyTable
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener(
-                        (
-                                observable,
-                                oldSelection,
-                                newSelection
-                        ) -> {
-
-                            boolean noSelection =
-                                    newSelection == null;
-
-                            editButton.setDisable(
-                                    noSelection
-                            );
-
-                            deleteButton.setDisable(
-                                    noSelection
-                            );
-                        }
-                );
-
+        addPolicyButton.disableProperty().bind(busy);
+        refreshButton.disableProperty().bind(busy);
+        editButton.disableProperty().bind(
+                busy.or(policyTable.getSelectionModel().selectedItemProperty().isNull())
+        );
+        deleteButton.disableProperty().bind(
+                busy.or(policyTable.getSelectionModel().selectedItemProperty().isNull())
+        );
 
         Region actionSpacer =
                 new Region();
@@ -262,6 +264,7 @@ public class InsurancePolicyView {
                 new HBox(
                         10,
                         refreshButton,
+                        loadingIndicator,
                         actionSpacer,
                         editButton,
                         deleteButton
@@ -392,37 +395,42 @@ public class InsurancePolicyView {
 
     private void loadData() {
 
-        try {
-
-            List<PatientResponse> loadedPatients =
-                    patientApiService
-                            .getAllPatients();
-
-            patients.setAll(
-                    loadedPatients
-            );
-
-
-            List<InsurancePolicyResponse> loadedPolicies =
-                    insurancePolicyApiService
-                            .getAllPolicies();
-
-            policies.setAll(
-                    loadedPolicies
-            );
-
-
-            policyTable
-                    .getSelectionModel()
-                    .clearSelection();
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Insurance Policies",
-                    exception.getMessage()
-            );
+        if (busy.get()) {
+            return;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+                () -> new InsurancePolicyPageData(
+                        patientApiService.getAllPatients(),
+                        insurancePolicyApiService.getAllPolicies()
+                ),
+                data -> {
+                    try {
+                        patients.setAll(data.patients());
+                        policies.setAll(data.policies());
+                        policyTable.getSelectionModel().clearSelection();
+                    } finally {
+                        busy.set(false);
+                    }
+                },
+                throwable -> {
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Load Insurance Policies",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Load Insurance Policies",
+                                "An unexpected error occurred while loading insurance policies."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -485,6 +493,10 @@ public class InsurancePolicyView {
 
     private void showAddPolicyDialog() {
 
+        if (busy.get()) {
+            return;
+        }
+
         List<PatientResponse> eligiblePatients =
                 getEligiblePatients(
                         null
@@ -526,31 +538,46 @@ public class InsurancePolicyView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            insurancePolicyApiService
-                    .addPolicy(
-                            request
+        AsyncTaskRunner.run(
+                () -> insurancePolicyApiService.addPolicy(request),
+                response -> {
+                    try {
+                        policies.add(response);
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Policy Added",
+                            "Insurance policy was added successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadData();
-
-            showInformation(
-                    "Policy Added",
-                    "Insurance policy was added successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Add Policy",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Add Policy",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Add Policy",
+                                "An unexpected error occurred while adding the policy."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void editSelectedPolicy() {
+
+        if (busy.get()) {
+            return;
+        }
 
         InsurancePolicyResponse selectedPolicy =
                 policyTable
@@ -587,33 +614,49 @@ public class InsurancePolicyView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            insurancePolicyApiService
-                    .updatePolicy(
-                            selectedPolicy
-                                    .getPolicyId(),
-                            request
+        AsyncTaskRunner.run(
+                () -> insurancePolicyApiService.updatePolicy(selectedPolicy.getPolicyId(), request),
+                response -> {
+                    try {
+                        int index = policies.indexOf(selectedPolicy);
+                        if (index >= 0) {
+                            policies.set(index, response);
+                        }
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Policy Updated",
+                            "Insurance policy was updated successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadData();
-
-            showInformation(
-                    "Policy Updated",
-                    "Insurance policy was updated successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Update Policy",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Update Policy",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Update Policy",
+                                "An unexpected error occurred while updating the policy."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void deleteSelectedPolicy() {
+
+        if (busy.get()) {
+            return;
+        }
 
         InsurancePolicyResponse selectedPolicy =
                 policyTable
@@ -672,28 +715,41 @@ public class InsurancePolicyView {
         }
 
 
-        try {
+        busy.set(true);
 
-            insurancePolicyApiService
-                    .deletePolicy(
-                            selectedPolicy
-                                    .getPolicyId()
+        AsyncTaskRunner.run(
+                () -> {
+                    insurancePolicyApiService.deletePolicy(selectedPolicy.getPolicyId());
+                    return null;
+                },
+                response -> {
+                    try {
+                        policies.remove(selectedPolicy);
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Policy Deleted",
+                            "Insurance policy was deleted successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadData();
-
-            showInformation(
-                    "Policy Deleted",
-                    "Insurance policy was deleted successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Delete Policy",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Delete Policy",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Delete Policy",
+                                "An unexpected error occurred while deleting the policy."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -1363,6 +1419,11 @@ public class InsurancePolicyView {
             String providerName,
             BigDecimal coverageAmount,
             String policyType
+    ) {
+    }
+    private record InsurancePolicyPageData(
+            List<PatientResponse> patients,
+            List<InsurancePolicyResponse> policies
     ) {
     }
 }

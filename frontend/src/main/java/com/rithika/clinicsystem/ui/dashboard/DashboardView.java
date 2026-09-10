@@ -16,6 +16,10 @@ import com.rithika.clinicsystem.dto.MedicalRecordResponse;
 import com.rithika.clinicsystem.dto.PatientResponse;
 
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.AsyncTaskRunner;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -23,6 +27,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
@@ -52,6 +57,8 @@ public class DashboardView {
     private final InsuranceClaimApiService insuranceClaimApiService;
 
     private final BorderPane root;
+
+    private final BooleanProperty busy;
 
 
     /*
@@ -169,6 +176,9 @@ public class DashboardView {
                 createOverviewValueLabel();
 
 
+        this.busy =
+                new SimpleBooleanProperty(false);
+
         buildView();
 
         loadDashboardData();
@@ -176,6 +186,16 @@ public class DashboardView {
 
 
     private void buildView() {
+
+        ProgressIndicator loadingIndicator =
+                new ProgressIndicator();
+
+        loadingIndicator.setPrefSize(18, 18);
+        loadingIndicator.setMinSize(18, 18);
+        loadingIndicator.setMaxSize(18, 18);
+        loadingIndicator.visibleProperty().bind(busy);
+        loadingIndicator.managedProperty().bind(busy);
+
 
         root
                 .getStyleClass()
@@ -239,6 +259,8 @@ public class DashboardView {
         );
 
 
+        refreshButton.disableProperty().bind(busy);
+
         Region headerSpacer =
                 new Region();
 
@@ -253,6 +275,7 @@ public class DashboardView {
                         20,
                         titleSection,
                         headerSpacer,
+                        loadingIndicator,
                         refreshButton
                 );
 
@@ -785,284 +808,287 @@ public class DashboardView {
 
     private void loadDashboardData() {
 
-        try {
-
-            /*
-             * ------------------------------------------------
-             * FETCH DATA
-             * ------------------------------------------------
-             */
-
-            List<PatientResponse> patients =
-                    patientApiService
-                            .getAllPatients();
-
-
-            List<DoctorResponse> doctors =
-                    doctorApiService
-                            .getAllDoctors();
-
-
-            List<AppointmentResponse> appointments =
-                    appointmentApiService
-                            .getAllAppointments();
-
-
-            List<MedicalRecordResponse> medicalRecords =
-                    medicalRecordApiService
-                            .getAllMedicalRecords();
-
-
-            List<InsurancePolicyResponse> policies =
-                    insurancePolicyApiService
-                            .getAllPolicies();
-
-
-            List<InsuranceClaimResponse> claims =
-                    insuranceClaimApiService
-                            .getAllClaims();
-
-
-            /*
-             * ------------------------------------------------
-             * SUMMARY METRICS
-             * ------------------------------------------------
-             */
-
-            totalPatientsValue.setText(
-                    String.valueOf(
-                            patients.size()
-                    )
-            );
-
-
-            totalDoctorsValue.setText(
-                    String.valueOf(
-                            doctors.size()
-                    )
-            );
-
-
-            totalAppointmentsValue.setText(
-                    String.valueOf(
-                            appointments.size()
-                    )
-            );
-
-
-            totalMedicalRecordsValue.setText(
-                    String.valueOf(
-                            medicalRecords.size()
-                    )
-            );
-
-
-            totalPoliciesValue.setText(
-                    String.valueOf(
-                            policies.size()
-                    )
-            );
-
-
-            /*
-             * ------------------------------------------------
-             * APPOINTMENT STATUS COUNTS
-             * ------------------------------------------------
-             */
-
-            long bookedAppointments =
-                    appointments
-                            .stream()
-                            .filter(
-                                    appointment ->
-                                            "BOOKED"
-                                                    .equalsIgnoreCase(
-                                                            appointment
-                                                                    .getStatus()
-                                                    )
-                            )
-                            .count();
-
-
-            long completedAppointments =
-                    appointments
-                            .stream()
-                            .filter(
-                                    appointment ->
-                                            "COMPLETED"
-                                                    .equalsIgnoreCase(
-                                                            appointment
-                                                                    .getStatus()
-                                                    )
-                            )
-                            .count();
-
-
-            long cancelledAppointments =
-                    appointments
-                            .stream()
-                            .filter(
-                                    appointment ->
-                                            "CANCELLED"
-                                                    .equalsIgnoreCase(
-                                                            appointment
-                                                                    .getStatus()
-                                                    )
-                            )
-                            .count();
-
-
-            LocalDate today =
-                    LocalDate.now();
-
-
-            long appointmentsToday =
-                    appointments
-                            .stream()
-                            .filter(
-                                    appointment ->
-                                            today.equals(
-                                                    appointment
-                                                            .getAppointmentDate()
-                                            )
-                            )
-                            .count();
-
-
-            bookedAppointmentsValue.setText(
-                    String.valueOf(
-                            bookedAppointments
-                    )
-            );
-
-
-            completedAppointmentsValue.setText(
-                    String.valueOf(
-                            completedAppointments
-                    )
-            );
-
-
-            cancelledAppointmentsValue.setText(
-                    String.valueOf(
-                            cancelledAppointments
-                    )
-            );
-
-
-            todayAppointmentsValue.setText(
-                    String.valueOf(
-                            appointmentsToday
-                    )
-            );
-
-
-            /*
-             * ------------------------------------------------
-             * CLAIM STATUS COUNTS
-             * ------------------------------------------------
-             */
-
-            long pendingClaims =
-                    claims
-                            .stream()
-                            .filter(
-                                    claim ->
-                                            "PENDING"
-                                                    .equalsIgnoreCase(
-                                                            claim
-                                                                    .getStatus()
-                                                    )
-                            )
-                            .count();
-
-
-            long approvedClaims =
-                    claims
-                            .stream()
-                            .filter(
-                                    claim ->
-                                            "APPROVED"
-                                                    .equalsIgnoreCase(
-                                                            claim
-                                                                    .getStatus()
-                                                    )
-                            )
-                            .count();
-
-
-            long rejectedClaims =
-                    claims
-                            .stream()
-                            .filter(
-                                    claim ->
-                                            "REJECTED"
-                                                    .equalsIgnoreCase(
-                                                            claim
-                                                                    .getStatus()
-                                                    )
-                            )
-                            .count();
-
-
-            BigDecimal totalClaims =
-                    claims
-                            .stream()
-                            .map(
-                                    InsuranceClaimResponse::getClaimAmount
-                            )
-                            .filter(
-                                    amount ->
-                                            amount != null
-                            )
-                            .reduce(
-                                    BigDecimal.ZERO,
-                                    BigDecimal::add
-                            );
-
-
-            pendingClaimsValue.setText(
-                    String.valueOf(
-                            pendingClaims
-                    )
-            );
-
-
-            pendingClaimOverviewValue.setText(
-                    String.valueOf(
-                            pendingClaims
-                    )
-            );
-
-
-            approvedClaimsValue.setText(
-                    String.valueOf(
-                            approvedClaims
-                    )
-            );
-
-
-            rejectedClaimsValue.setText(
-                    String.valueOf(
-                            rejectedClaims
-                    )
-            );
-
-
-            totalClaimValue.setText(
-                    "Rs. "
-                            + CURRENCY_FORMAT.format(
-                            totalClaims
-                    )
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Dashboard",
-                    exception.getMessage()
-            );
+        if (busy.get()) {
+            return;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+                () -> new DashboardPageData(
+                        patientApiService.getAllPatients(),
+                        doctorApiService.getAllDoctors(),
+                        appointmentApiService.getAllAppointments(),
+                        medicalRecordApiService.getAllMedicalRecords(),
+                        insurancePolicyApiService.getAllPolicies(),
+                        insuranceClaimApiService.getAllClaims()
+                ),
+                data -> {
+                    try {
+                        updateDashboard(data);
+                    } finally {
+                        busy.set(false);
+                    }
+                },
+                throwable -> {
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Load Dashboard",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Load Dashboard",
+                                "An unexpected error occurred while loading dashboard data."
+                        );
+                    }
+                }
+        );
+    }
+
+
+    private void updateDashboard(DashboardPageData data) {
+        List<PatientResponse> patients = data.patients();
+        List<DoctorResponse> doctors = data.doctors();
+        List<AppointmentResponse> appointments = data.appointments();
+        List<MedicalRecordResponse> medicalRecords = data.medicalRecords();
+        List<InsurancePolicyResponse> policies = data.policies();
+        List<InsuranceClaimResponse> claims = data.claims();
+
+        /*
+         * ------------------------------------------------
+         * SUMMARY METRICS
+         * ------------------------------------------------
+         */
+
+        totalPatientsValue.setText(
+                String.valueOf(
+                        patients.size()
+                )
+        );
+
+
+        totalDoctorsValue.setText(
+                String.valueOf(
+                        doctors.size()
+                )
+        );
+
+
+        totalAppointmentsValue.setText(
+                String.valueOf(
+                        appointments.size()
+                )
+        );
+
+
+        totalMedicalRecordsValue.setText(
+                String.valueOf(
+                        medicalRecords.size()
+                )
+        );
+
+
+        totalPoliciesValue.setText(
+                String.valueOf(
+                        policies.size()
+                )
+        );
+
+
+        /*
+         * ------------------------------------------------
+         * APPOINTMENT STATUS COUNTS
+         * ------------------------------------------------
+         */
+
+        long bookedAppointments =
+                appointments
+                        .stream()
+                        .filter(
+                                appointment ->
+                                        "BOOKED"
+                                                .equalsIgnoreCase(
+                                                        appointment
+                                                                .getStatus()
+                                                )
+                        )
+                        .count();
+
+
+        long completedAppointments =
+                appointments
+                        .stream()
+                        .filter(
+                                appointment ->
+                                        "COMPLETED"
+                                                .equalsIgnoreCase(
+                                                        appointment
+                                                                .getStatus()
+                                                )
+                        )
+                        .count();
+
+
+        long cancelledAppointments =
+                appointments
+                        .stream()
+                        .filter(
+                                appointment ->
+                                        "CANCELLED"
+                                                .equalsIgnoreCase(
+                                                        appointment
+                                                                .getStatus()
+                                                )
+                        )
+                        .count();
+
+
+        LocalDate today =
+                LocalDate.now();
+
+
+        long appointmentsToday =
+                appointments
+                        .stream()
+                        .filter(
+                                appointment ->
+                                        today.equals(
+                                                appointment
+                                                        .getAppointmentDate()
+                                        )
+                        )
+                        .count();
+
+
+        bookedAppointmentsValue.setText(
+                String.valueOf(
+                        bookedAppointments
+                )
+        );
+
+
+        completedAppointmentsValue.setText(
+                String.valueOf(
+                        completedAppointments
+                )
+        );
+
+
+        cancelledAppointmentsValue.setText(
+                String.valueOf(
+                        cancelledAppointments
+                )
+        );
+
+
+        todayAppointmentsValue.setText(
+                String.valueOf(
+                        appointmentsToday
+                )
+        );
+
+
+        /*
+         * ------------------------------------------------
+         * CLAIM STATUS COUNTS
+         * ------------------------------------------------
+         */
+
+        long pendingClaims =
+                claims
+                        .stream()
+                        .filter(
+                                claim ->
+                                        "PENDING"
+                                                .equalsIgnoreCase(
+                                                        claim
+                                                                .getStatus()
+                                                )
+                        )
+                        .count();
+
+
+        long approvedClaims =
+                claims
+                        .stream()
+                        .filter(
+                                claim ->
+                                        "APPROVED"
+                                                .equalsIgnoreCase(
+                                                        claim
+                                                                .getStatus()
+                                                )
+                        )
+                        .count();
+
+
+        long rejectedClaims =
+                claims
+                        .stream()
+                        .filter(
+                                claim ->
+                                        "REJECTED"
+                                                .equalsIgnoreCase(
+                                                        claim
+                                                                .getStatus()
+                                                )
+                        )
+                        .count();
+
+
+        BigDecimal totalClaims =
+                claims
+                        .stream()
+                        .map(
+                                InsuranceClaimResponse::getClaimAmount
+                        )
+                        .filter(
+                                amount ->
+                                        amount != null
+                        )
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+
+
+        pendingClaimsValue.setText(
+                String.valueOf(
+                        pendingClaims
+                )
+        );
+
+
+        pendingClaimOverviewValue.setText(
+                String.valueOf(
+                        pendingClaims
+                )
+        );
+
+
+        approvedClaimsValue.setText(
+                String.valueOf(
+                        approvedClaims
+                )
+        );
+
+
+        rejectedClaimsValue.setText(
+                String.valueOf(
+                        rejectedClaims
+                )
+        );
+
+
+        totalClaimValue.setText(
+                "Rs. "
+                        + CURRENCY_FORMAT.format(
+                        totalClaims
+                )
+        );
     }
 
 
@@ -1101,5 +1127,14 @@ public class DashboardView {
     public Parent getView() {
 
         return root;
+    }
+    private record DashboardPageData(
+            List<PatientResponse> patients,
+            List<DoctorResponse> doctors,
+            List<AppointmentResponse> appointments,
+            List<MedicalRecordResponse> medicalRecords,
+            List<InsurancePolicyResponse> policies,
+            List<InsuranceClaimResponse> claims
+    ) {
     }
 }

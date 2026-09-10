@@ -7,6 +7,11 @@ import com.rithika.clinicsystem.dto.InsuranceClaimRequest;
 import com.rithika.clinicsystem.dto.InsuranceClaimResponse;
 import com.rithika.clinicsystem.dto.MedicalRecordResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.AsyncTaskRunner;
+
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import com.rithika.clinicsystem.util.InputValidator;
 
 
@@ -31,6 +36,8 @@ public class InsuranceClaimView {
     private final MedicalRecordApiService medicalRecordApiService;
 
     private final BorderPane root;
+
+    private final BooleanProperty busy;
 
     private final TableView<InsuranceClaimResponse> claimTable;
 
@@ -72,6 +79,9 @@ public class InsuranceClaimView {
         this.medicalRecords =
                 FXCollections.observableArrayList();
 
+        this.busy =
+                new SimpleBooleanProperty(false);
+
         buildView();
 
         loadData();
@@ -79,6 +89,16 @@ public class InsuranceClaimView {
 
 
     private void buildView() {
+
+        ProgressIndicator loadingIndicator =
+                new ProgressIndicator();
+
+        loadingIndicator.setPrefSize(18, 18);
+        loadingIndicator.setMinSize(18, 18);
+        loadingIndicator.setMaxSize(18, 18);
+        loadingIndicator.visibleProperty().bind(busy);
+        loadingIndicator.managedProperty().bind(busy);
+
 
         root
                 .getStyleClass()
@@ -234,28 +254,25 @@ public class InsuranceClaimView {
                 .getStyleClass()
                 .add("primary-button");
 
-        processButton.setDisable(
-                true
-        );
 
         processButton.setOnAction(
                 event -> processSelectedClaim()
         );
 
 
-        claimTable
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener(
-                        (
-                                observable,
-                                oldSelection,
-                                newSelection
-                        ) -> updateProcessButton(
-                                newSelection
-                        )
-                );
-
+        createClaimButton.disableProperty().bind(busy);
+        refreshButton.disableProperty().bind(busy);
+        processButton.disableProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> {
+                            var selection = claimTable.getSelectionModel().getSelectedItem();
+                            return busy.get() || selection == null
+                                    || !"PENDING".equalsIgnoreCase(selection.getStatus());
+                        },
+                        busy,
+                        claimTable.getSelectionModel().selectedItemProperty()
+                )
+        );
 
         Region actionSpacer =
                 new Region();
@@ -270,6 +287,7 @@ public class InsuranceClaimView {
                 new HBox(
                         10,
                         refreshButton,
+                        loadingIndicator,
                         actionSpacer,
                         processButton
                 );
@@ -516,37 +534,42 @@ public class InsuranceClaimView {
 
     private void loadData() {
 
-        try {
-
-            List<MedicalRecordResponse> loadedRecords =
-                    medicalRecordApiService
-                            .getAllMedicalRecords();
-
-            medicalRecords.setAll(
-                    loadedRecords
-            );
-
-
-            List<InsuranceClaimResponse> loadedClaims =
-                    insuranceClaimApiService
-                            .getAllClaims();
-
-            claims.setAll(
-                    loadedClaims
-            );
-
-
-            claimTable
-                    .getSelectionModel()
-                    .clearSelection();
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Insurance Claims",
-                    exception.getMessage()
-            );
+        if (busy.get()) {
+            return;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+                () -> new InsuranceClaimPageData(
+                        medicalRecordApiService.getAllMedicalRecords(),
+                        insuranceClaimApiService.getAllClaims()
+                ),
+                data -> {
+                    try {
+                        medicalRecords.setAll(data.medicalRecords());
+                        claims.setAll(data.claims());
+                        claimTable.getSelectionModel().clearSelection();
+                    } finally {
+                        busy.set(false);
+                    }
+                },
+                throwable -> {
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Load Insurance Claims",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Load Insurance Claims",
+                                "An unexpected error occurred while loading insurance claims."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -605,25 +628,11 @@ public class InsuranceClaimView {
     }
 
 
-    private void updateProcessButton(
-            InsuranceClaimResponse claim
-    ) {
-
-        boolean pending =
-                claim != null
-                        && "PENDING"
-                        .equalsIgnoreCase(
-                                claim.getStatus()
-                        );
-
-
-        processButton.setDisable(
-                !pending
-        );
-    }
-
-
     private void showCreateClaimDialog() {
+
+        if (busy.get()) {
+            return;
+        }
 
         List<MedicalRecordResponse> eligibleRecords =
                 getEligibleMedicalRecords();
@@ -775,6 +784,8 @@ public class InsuranceClaimView {
                 );
 
 
+        InsuranceClaimRequest request;
+
         while (true) {
 
             Optional<ButtonType> result =
@@ -820,7 +831,7 @@ public class InsuranceClaimView {
             }
 
 
-            InsuranceClaimRequest request =
+            request =
                     new InsuranceClaimRequest(
                             claimId,
                             medicalRecord
@@ -828,35 +839,42 @@ public class InsuranceClaimView {
                     );
 
 
-            try {
-
-                insuranceClaimApiService
-                        .createClaim(
-                                request
-                        );
-
-                loadData();
-
-
-                showInformation(
-                        "Claim Created",
-                        "Insurance claim was created successfully "
-                                + "with PENDING status."
-                );
-
-
-                return;
-
-            } catch (ApiException exception) {
-
-                showError(
-                        "Unable to Create Claim",
-                        exception.getMessage()
-                );
-
-                return;
-            }
+            break;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+                () -> insuranceClaimApiService.createClaim(request),
+                response -> {
+                    try {
+                        claims.add(response);
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Claim Created",
+                            "Insurance claim was created successfully "
+                                    + "with PENDING status."
+                    );
+                },
+                throwable -> {
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Create Claim",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Create Claim",
+                                "An unexpected error occurred while creating the claim."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -988,6 +1006,10 @@ public class InsuranceClaimView {
 
     private void processSelectedClaim() {
 
+        if (busy.get()) {
+            return;
+        }
+
         InsuranceClaimResponse selectedClaim =
                 claimTable
                         .getSelectionModel()
@@ -1064,37 +1086,47 @@ public class InsuranceClaimView {
         }
 
 
-        try {
+        busy.set(true);
 
-            InsuranceClaimResponse processedClaim =
-                    insuranceClaimApiService
-                            .processClaim(
-                                    selectedClaim
-                                            .getClaimId()
-                            );
+        AsyncTaskRunner.run(
+                () -> insuranceClaimApiService.processClaim(selectedClaim.getClaimId()),
+                response -> {
+                    try {
+                        int index = claims.indexOf(selectedClaim);
+                        if (index >= 0) {
+                            claims.set(index, response);
+                        }
+                    } finally {
+                        busy.set(false);
+                    }
 
+                    showInformation(
+                            "Claim Processed",
+                            "Claim "
+                                    + response
+                                    .getClaimId()
+                                    + " is now "
+                                    + response
+                                    .getStatus()
+                                    + "."
+                    );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadData();
-
-
-            showInformation(
-                    "Claim Processed",
-                    "Claim "
-                            + processedClaim
-                            .getClaimId()
-                            + " is now "
-                            + processedClaim
-                            .getStatus()
-                            + "."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Process Claim",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Process Claim",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Process Claim",
+                                "An unexpected error occurred while processing the claim."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -1183,5 +1215,10 @@ public class InsuranceClaimView {
     public Parent getView() {
 
         return root;
+    }
+    private record InsuranceClaimPageData(
+            List<MedicalRecordResponse> medicalRecords,
+            List<InsuranceClaimResponse> claims
+    ) {
     }
 }

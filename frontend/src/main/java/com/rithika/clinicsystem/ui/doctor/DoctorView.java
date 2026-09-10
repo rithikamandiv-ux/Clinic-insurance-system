@@ -6,6 +6,7 @@ import com.rithika.clinicsystem.dto.DoctorRequest;
 import com.rithika.clinicsystem.dto.DoctorResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
 import com.rithika.clinicsystem.util.InputValidator;
+import com.rithika.clinicsystem.util.AsyncTaskRunner;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -21,6 +22,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,6 +40,8 @@ public class DoctorView {
     private final ObservableList<DoctorResponse> doctors;
 
     private final FilteredList<DoctorResponse> filteredDoctors;
+
+    private final BooleanProperty busy;
 
 
     public DoctorView(
@@ -61,6 +66,9 @@ public class DoctorView {
                         doctor -> true
                 );
 
+        this.busy =
+                new SimpleBooleanProperty(false);
+
         buildView();
 
         loadDoctors();
@@ -76,6 +84,32 @@ public class DoctorView {
         root.setPadding(
                 new Insets(32)
         );
+
+        ProgressIndicator loadingIndicator =
+                new ProgressIndicator();
+
+        loadingIndicator.setPrefSize(
+                18,
+                18
+        );
+
+        loadingIndicator.setMinSize(
+                18,
+                18
+        );
+
+        loadingIndicator.setMaxSize(
+                18,
+                18
+        );
+
+        loadingIndicator
+                .visibleProperty()
+                .bind(busy);
+
+        loadingIndicator
+                .managedProperty()
+                .bind(busy);
 
 
         /*
@@ -237,6 +271,22 @@ public class DoctorView {
                 event -> deleteSelectedDoctor()
         );
 
+        addDoctorButton
+                .disableProperty()
+                .bind(busy);
+
+        refreshButton
+                .disableProperty()
+                .bind(busy);
+
+        editButton
+                .disableProperty()
+                .bind(busy);
+
+        deleteButton
+                .disableProperty()
+                .bind(busy);
+
 
         Region actionSpacer =
                 new Region();
@@ -251,6 +301,7 @@ public class DoctorView {
                 new HBox(
                         10,
                         refreshButton,
+                        loadingIndicator,
                         actionSpacer,
                         editButton,
                         deleteButton
@@ -389,23 +440,45 @@ public class DoctorView {
 
     private void loadDoctors() {
 
-        try {
-
-            List<DoctorResponse> result =
-                    doctorApiService
-                            .getAllDoctors();
-
-            doctors.setAll(
-                    result
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Doctors",
-                    exception.getMessage()
-            );
+        if (busy.get()) {
+            return;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+
+                () ->
+                        doctorApiService
+                                .getAllDoctors(),
+
+                result -> {
+
+                    doctors.setAll(result);
+
+                    busy.set(false);
+                },
+
+                throwable -> {
+
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+
+                        showError(
+                                "Unable to Load Doctors",
+                                apiException.getMessage()
+                        );
+
+                    } else {
+
+                        showError(
+                                "Unable to Load Doctors",
+                                "An unexpected error occurred while loading doctors."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -481,25 +554,46 @@ public class DoctorView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            doctorApiService
-                    .addDoctor(request);
+        AsyncTaskRunner.run(
 
-            loadDoctors();
+                () ->
+                        doctorApiService
+                                .addDoctor(request),
 
-            showInformation(
-                    "Doctor Added",
-                    "Doctor was added successfully."
-            );
+                response -> {
 
-        } catch (ApiException exception) {
+                    doctors.add(response);
 
-            showError(
-                    "Unable to Add Doctor",
-                    exception.getMessage()
-            );
-        }
+                    busy.set(false);
+
+                    showInformation(
+                            "Doctor Added",
+                            "Doctor was added successfully."
+                    );
+                },
+
+                throwable -> {
+
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+
+                        showError(
+                                "Unable to Add Doctor",
+                                apiException.getMessage()
+                        );
+
+                    } else {
+
+                        showError(
+                                "Unable to Add Doctor",
+                                "An unexpected error occurred while adding the doctor."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -544,29 +638,57 @@ public class DoctorView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            doctorApiService
-                    .updateDoctor(
-                            selectedDoctor
-                                    .getDoctorId(),
-                            request
+        AsyncTaskRunner.run(
+
+                () ->
+                        doctorApiService
+                                .updateDoctor(
+                                        selectedDoctor.getDoctorId(),
+                                        request
+                                ),
+
+                response -> {
+
+                    int index =
+                            doctors.indexOf(selectedDoctor);
+
+                    if (index >= 0) {
+                        doctors.set(
+                                index,
+                                response
+                        );
+                    }
+
+                    busy.set(false);
+
+                    showInformation(
+                            "Doctor Updated",
+                            "Doctor information was updated successfully."
                     );
+                },
 
-            loadDoctors();
+                throwable -> {
 
-            showInformation(
-                    "Doctor Updated",
-                    "Doctor information was updated successfully."
-            );
+                    busy.set(false);
 
-        } catch (ApiException exception) {
+                    if (throwable instanceof ApiException apiException) {
 
-            showError(
-                    "Unable to Update Doctor",
-                    exception.getMessage()
-            );
-        }
+                        showError(
+                                "Unable to Update Doctor",
+                                apiException.getMessage()
+                        );
+
+                    } else {
+
+                        showError(
+                                "Unable to Update Doctor",
+                                "An unexpected error occurred while updating the doctor."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -632,28 +754,52 @@ public class DoctorView {
         }
 
 
-        try {
+        busy.set(true);
 
-            doctorApiService
-                    .deleteDoctor(
-                            selectedDoctor
-                                    .getDoctorId()
+        AsyncTaskRunner.run(
+
+                () ->
+                        doctorApiService.deleteDoctor(
+                                selectedDoctor.getDoctorId()
+                        ),
+
+                () -> {
+
+                    doctors.removeIf(
+                            doctor ->
+                                    doctor.getDoctorId().equals(
+                                            selectedDoctor.getDoctorId()
+                                    )
                     );
 
-            loadDoctors();
+                    busy.set(false);
 
-            showInformation(
-                    "Doctor Deleted",
-                    "Doctor was deleted successfully."
-            );
+                    showInformation(
+                            "Doctor Deleted",
+                            "Doctor was deleted successfully."
+                    );
+                },
 
-        } catch (ApiException exception) {
+                throwable -> {
 
-            showError(
-                    "Unable to Delete Doctor",
-                    exception.getMessage()
-            );
-        }
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+
+                        showError(
+                                "Unable to Delete Doctor",
+                                apiException.getMessage()
+                        );
+
+                    } else {
+
+                        showError(
+                                "Unable to Delete Doctor",
+                                "An unexpected error occurred while deleting the doctor."
+                        );
+                    }
+                }
+        );
     }
 
 

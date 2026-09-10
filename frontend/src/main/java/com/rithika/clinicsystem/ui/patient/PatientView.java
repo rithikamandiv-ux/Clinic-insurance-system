@@ -5,6 +5,10 @@ import com.rithika.clinicsystem.api.PatientApiService;
 import com.rithika.clinicsystem.dto.PatientRequest;
 import com.rithika.clinicsystem.dto.PatientResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.AsyncTaskRunner;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleIntegerProperty;
@@ -31,6 +35,8 @@ public class PatientView {
     private final PatientApiService patientApiService;
 
     private final BorderPane root;
+
+    private final BooleanProperty busy;
 
     private final TableView<PatientResponse> patientTable;
 
@@ -61,6 +67,9 @@ public class PatientView {
                         patient -> true
                 );
 
+        this.busy =
+                new SimpleBooleanProperty(false);
+
         buildView();
 
         loadPatients();
@@ -68,6 +77,16 @@ public class PatientView {
 
 
     private void buildView() {
+
+        ProgressIndicator loadingIndicator =
+                new ProgressIndicator();
+
+        loadingIndicator.setPrefSize(18, 18);
+        loadingIndicator.setMinSize(18, 18);
+        loadingIndicator.setMaxSize(18, 18);
+        loadingIndicator.visibleProperty().bind(busy);
+        loadingIndicator.managedProperty().bind(busy);
+
 
         root
                 .getStyleClass()
@@ -239,6 +258,15 @@ public class PatientView {
         );
 
 
+        addPatientButton.disableProperty().bind(busy);
+        refreshButton.disableProperty().bind(busy);
+        editButton.disableProperty().bind(
+                busy
+        );
+        deleteButton.disableProperty().bind(
+                busy
+        );
+
         Region actionSpacer =
                 new Region();
 
@@ -252,6 +280,7 @@ public class PatientView {
                 new HBox(
                         10,
                         refreshButton,
+                        loadingIndicator,
                         actionSpacer,
                         editButton,
                         deleteButton
@@ -407,23 +436,37 @@ public class PatientView {
 
     private void loadPatients() {
 
-        try {
-
-            List<PatientResponse> result =
-                    patientApiService
-                            .getAllPatients();
-
-            patients.setAll(
-                    result
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Patients",
-                    exception.getMessage()
-            );
+        if (busy.get()) {
+            return;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+                () -> patientApiService.getAllPatients(),
+                data -> {
+                    try {
+                        patients.setAll(data);
+                    } finally {
+                        busy.set(false);
+                    }
+                },
+                throwable -> {
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Load Patients",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Load Patients",
+                                "An unexpected error occurred while loading patients."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -478,6 +521,10 @@ public class PatientView {
 
     private void showAddPatientDialog() {
 
+        if (busy.get()) {
+            return;
+        }
+
         PatientFormResult formResult =
                 showPatientForm(
                         "Add Patient",
@@ -499,29 +546,46 @@ public class PatientView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            patientApiService
-                    .addPatient(request);
+        AsyncTaskRunner.run(
+                () -> patientApiService.addPatient(request),
+                response -> {
+                    try {
+                        patients.add(response);
+                    } finally {
+                        busy.set(false);
+                    }
 
-            loadPatients();
+                    showInformation(
+                            "Patient Added",
+                            "Patient was added successfully."
+                    );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            showInformation(
-                    "Patient Added",
-                    "Patient was added successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Add Patient",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Add Patient",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Add Patient",
+                                "An unexpected error occurred while adding the patient."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void editSelectedPatient() {
+
+        if (busy.get()) {
+            return;
+        }
 
         PatientResponse selectedPatient =
                 patientTable
@@ -562,33 +626,49 @@ public class PatientView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            patientApiService
-                    .updatePatient(
-                            selectedPatient
-                                    .getPatientId(),
-                            request
+        AsyncTaskRunner.run(
+                () -> patientApiService.updatePatient(selectedPatient.getPatientId(), request),
+                response -> {
+                    try {
+                        int index = patients.indexOf(selectedPatient);
+                        if (index >= 0) {
+                            patients.set(index, response);
+                        }
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Patient Updated",
+                            "Patient information was updated successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadPatients();
-
-            showInformation(
-                    "Patient Updated",
-                    "Patient information was updated successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Update Patient",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Update Patient",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Update Patient",
+                                "An unexpected error occurred while updating the patient."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void deleteSelectedPatient() {
+
+        if (busy.get()) {
+            return;
+        }
 
         PatientResponse selectedPatient =
                 patientTable
@@ -650,28 +730,41 @@ public class PatientView {
         }
 
 
-        try {
+        busy.set(true);
 
-            patientApiService
-                    .deletePatient(
-                            selectedPatient
-                                    .getPatientId()
+        AsyncTaskRunner.run(
+                () -> {
+                    patientApiService.deletePatient(selectedPatient.getPatientId());
+                    return null;
+                },
+                response -> {
+                    try {
+                        patients.remove(selectedPatient);
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Patient Deleted",
+                            "Patient was deleted successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadPatients();
-
-            showInformation(
-                    "Patient Deleted",
-                    "Patient was deleted successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Delete Patient",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Delete Patient",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Delete Patient",
+                                "An unexpected error occurred while deleting the patient."
+                        );
+                    }
+                }
+        );
     }
 
 

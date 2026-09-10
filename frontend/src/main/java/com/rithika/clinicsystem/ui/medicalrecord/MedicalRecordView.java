@@ -7,6 +7,10 @@ import com.rithika.clinicsystem.dto.AppointmentResponse;
 import com.rithika.clinicsystem.dto.MedicalRecordRequest;
 import com.rithika.clinicsystem.dto.MedicalRecordResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.AsyncTaskRunner;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -30,6 +34,8 @@ public class MedicalRecordView {
     private final AppointmentApiService appointmentApiService;
 
     private final BorderPane root;
+
+    private final BooleanProperty busy;
 
     private final TableView<MedicalRecordResponse> medicalRecordTable;
 
@@ -71,6 +77,9 @@ public class MedicalRecordView {
         this.appointments =
                 FXCollections.observableArrayList();
 
+        this.busy =
+                new SimpleBooleanProperty(false);
+
         buildView();
 
         loadData();
@@ -78,6 +87,16 @@ public class MedicalRecordView {
 
 
     private void buildView() {
+
+        ProgressIndicator loadingIndicator =
+                new ProgressIndicator();
+
+        loadingIndicator.setPrefSize(18, 18);
+        loadingIndicator.setMinSize(18, 18);
+        loadingIndicator.setMaxSize(18, 18);
+        loadingIndicator.visibleProperty().bind(busy);
+        loadingIndicator.managedProperty().bind(busy);
+
 
         root
                 .getStyleClass()
@@ -233,9 +252,6 @@ public class MedicalRecordView {
                 .getStyleClass()
                 .add("primary-button");
 
-        editButton.setDisable(
-                true
-        );
 
         editButton.setOnAction(
                 event -> editSelectedMedicalRecord()
@@ -249,38 +265,20 @@ public class MedicalRecordView {
                 .getStyleClass()
                 .add("danger-button");
 
-        deleteButton.setDisable(
-                true
-        );
 
         deleteButton.setOnAction(
                 event -> deleteSelectedMedicalRecord()
         );
 
 
-        medicalRecordTable
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener(
-                        (
-                                observable,
-                                oldSelection,
-                                newSelection
-                        ) -> {
-
-                            boolean noSelection =
-                                    newSelection == null;
-
-                            editButton.setDisable(
-                                    noSelection
-                            );
-
-                            deleteButton.setDisable(
-                                    noSelection
-                            );
-                        }
-                );
-
+        addRecordButton.disableProperty().bind(busy);
+        refreshButton.disableProperty().bind(busy);
+        editButton.disableProperty().bind(
+                busy.or(medicalRecordTable.getSelectionModel().selectedItemProperty().isNull())
+        );
+        deleteButton.disableProperty().bind(
+                busy.or(medicalRecordTable.getSelectionModel().selectedItemProperty().isNull())
+        );
 
         Region actionSpacer =
                 new Region();
@@ -295,6 +293,7 @@ public class MedicalRecordView {
                 new HBox(
                         10,
                         refreshButton,
+                        loadingIndicator,
                         actionSpacer,
                         editButton,
                         deleteButton
@@ -499,37 +498,42 @@ public class MedicalRecordView {
 
     private void loadData() {
 
-        try {
-
-            List<AppointmentResponse> loadedAppointments =
-                    appointmentApiService
-                            .getAllAppointments();
-
-            appointments.setAll(
-                    loadedAppointments
-            );
-
-
-            List<MedicalRecordResponse> loadedRecords =
-                    medicalRecordApiService
-                            .getAllMedicalRecords();
-
-            medicalRecords.setAll(
-                    loadedRecords
-            );
-
-
-            medicalRecordTable
-                    .getSelectionModel()
-                    .clearSelection();
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Medical Records",
-                    exception.getMessage()
-            );
+        if (busy.get()) {
+            return;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+                () -> new MedicalRecordPageData(
+                        appointmentApiService.getAllAppointments(),
+                        medicalRecordApiService.getAllMedicalRecords()
+                ),
+                data -> {
+                    try {
+                        appointments.setAll(data.appointments());
+                        medicalRecords.setAll(data.medicalRecords());
+                        medicalRecordTable.getSelectionModel().clearSelection();
+                    } finally {
+                        busy.set(false);
+                    }
+                },
+                throwable -> {
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Load Medical Records",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Load Medical Records",
+                                "An unexpected error occurred while loading medical records."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -602,6 +606,10 @@ public class MedicalRecordView {
 
     private void showAddMedicalRecordDialog() {
 
+        if (busy.get()) {
+            return;
+        }
+
         List<AppointmentResponse>
                 eligibleAppointments =
                 getEligibleAppointments(
@@ -643,31 +651,46 @@ public class MedicalRecordView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            medicalRecordApiService
-                    .addMedicalRecord(
-                            request
+        AsyncTaskRunner.run(
+                () -> medicalRecordApiService.addMedicalRecord(request),
+                response -> {
+                    try {
+                        medicalRecords.add(response);
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Medical Record Added",
+                            "Medical record was added successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadData();
-
-            showInformation(
-                    "Medical Record Added",
-                    "Medical record was added successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Add Medical Record",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Add Medical Record",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Add Medical Record",
+                                "An unexpected error occurred while adding the medical record."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void editSelectedMedicalRecord() {
+
+        if (busy.get()) {
+            return;
+        }
 
         MedicalRecordResponse selectedRecord =
                 medicalRecordTable
@@ -713,33 +736,49 @@ public class MedicalRecordView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            medicalRecordApiService
-                    .updateMedicalRecord(
-                            selectedRecord
-                                    .getRecordId(),
-                            request
+        AsyncTaskRunner.run(
+                () -> medicalRecordApiService.updateMedicalRecord(selectedRecord.getRecordId(), request),
+                response -> {
+                    try {
+                        int index = medicalRecords.indexOf(selectedRecord);
+                        if (index >= 0) {
+                            medicalRecords.set(index, response);
+                        }
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Medical Record Updated",
+                            "Medical record was updated successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadData();
-
-            showInformation(
-                    "Medical Record Updated",
-                    "Medical record was updated successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Update Medical Record",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Update Medical Record",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Update Medical Record",
+                                "An unexpected error occurred while updating the medical record."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void deleteSelectedMedicalRecord() {
+
+        if (busy.get()) {
+            return;
+        }
 
         MedicalRecordResponse selectedRecord =
                 medicalRecordTable
@@ -798,28 +837,41 @@ public class MedicalRecordView {
         }
 
 
-        try {
+        busy.set(true);
 
-            medicalRecordApiService
-                    .deleteMedicalRecord(
-                            selectedRecord
-                                    .getRecordId()
+        AsyncTaskRunner.run(
+                () -> {
+                    medicalRecordApiService.deleteMedicalRecord(selectedRecord.getRecordId());
+                    return null;
+                },
+                response -> {
+                    try {
+                        medicalRecords.remove(selectedRecord);
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Medical Record Deleted",
+                            "Medical record was deleted successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadData();
-
-            showInformation(
-                    "Medical Record Deleted",
-                    "Medical record was deleted successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Delete Medical Record",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Delete Medical Record",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Delete Medical Record",
+                                "An unexpected error occurred while deleting the medical record."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -1582,6 +1634,11 @@ public class MedicalRecordView {
             String diagnosis,
             String treatment,
             BigDecimal treatmentCost
+    ) {
+    }
+    private record MedicalRecordPageData(
+            List<AppointmentResponse> appointments,
+            List<MedicalRecordResponse> medicalRecords
     ) {
     }
 }

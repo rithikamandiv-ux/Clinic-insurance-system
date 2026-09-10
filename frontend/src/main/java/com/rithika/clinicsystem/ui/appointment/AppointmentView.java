@@ -9,6 +9,11 @@ import com.rithika.clinicsystem.dto.AppointmentResponse;
 import com.rithika.clinicsystem.dto.DoctorResponse;
 import com.rithika.clinicsystem.dto.PatientResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
+import com.rithika.clinicsystem.util.AsyncTaskRunner;
+
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import com.rithika.clinicsystem.util.InputValidator;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -34,6 +39,8 @@ public class AppointmentView {
     private final DoctorApiService doctorApiService;
 
     private final BorderPane root;
+
+    private final BooleanProperty busy;
 
     private final TableView<AppointmentResponse> appointmentTable;
 
@@ -85,14 +92,25 @@ public class AppointmentView {
         this.doctorOptions =
                 FXCollections.observableArrayList();
 
-        buildView();
+        this.busy =
+                new SimpleBooleanProperty(false);
 
-        loadReferenceData();
+        buildView();
         loadAppointments();
     }
 
 
     private void buildView() {
+
+        ProgressIndicator loadingIndicator =
+                new ProgressIndicator();
+
+        loadingIndicator.setPrefSize(18, 18);
+        loadingIndicator.setMinSize(18, 18);
+        loadingIndicator.setMaxSize(18, 18);
+        loadingIndicator.visibleProperty().bind(busy);
+        loadingIndicator.managedProperty().bind(busy);
+
 
         root
                 .getStyleClass()
@@ -235,8 +253,6 @@ public class AppointmentView {
                 .add("secondary-button");
 
         refreshButton.setOnAction(event -> {
-
-            loadReferenceData();
             loadAppointments();
         });
 
@@ -248,7 +264,6 @@ public class AppointmentView {
                 .getStyleClass()
                 .add("primary-button");
 
-        editButton.setDisable(true);
 
         editButton.setOnAction(
                 event -> editSelectedAppointment()
@@ -262,7 +277,6 @@ public class AppointmentView {
                 .getStyleClass()
                 .add("success-button");
 
-        completeButton.setDisable(true);
 
         completeButton.setOnAction(
                 event -> completeSelectedAppointment()
@@ -276,7 +290,6 @@ public class AppointmentView {
                 .getStyleClass()
                 .add("warning-button");
 
-        cancelButton.setDisable(true);
 
         cancelButton.setOnAction(
                 event -> cancelSelectedAppointment()
@@ -290,26 +303,42 @@ public class AppointmentView {
                 .getStyleClass()
                 .add("danger-button");
 
-        deleteButton.setDisable(true);
 
         deleteButton.setOnAction(
                 event -> deleteSelectedAppointment()
         );
 
 
-        appointmentTable
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener(
-                        (
-                                observable,
-                                oldSelection,
-                                newSelection
-                        ) -> updateActionButtons(
-                                newSelection
-                        )
-                );
-
+        addAppointmentButton.disableProperty().bind(busy);
+        refreshButton.disableProperty().bind(busy);
+        editButton.disableProperty().bind(
+                busy.or(appointmentTable.getSelectionModel().selectedItemProperty().isNull())
+        );
+        deleteButton.disableProperty().bind(
+                busy.or(appointmentTable.getSelectionModel().selectedItemProperty().isNull())
+        );
+        completeButton.disableProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> {
+                            var selection = appointmentTable.getSelectionModel().getSelectedItem();
+                            return busy.get() || selection == null
+                                    || !"BOOKED".equalsIgnoreCase(selection.getStatus());
+                        },
+                        busy,
+                        appointmentTable.getSelectionModel().selectedItemProperty()
+                )
+        );
+        cancelButton.disableProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> {
+                            var selection = appointmentTable.getSelectionModel().getSelectedItem();
+                            return busy.get() || selection == null
+                                    || !"BOOKED".equalsIgnoreCase(selection.getStatus());
+                        },
+                        busy,
+                        appointmentTable.getSelectionModel().selectedItemProperty()
+                )
+        );
 
         Region actionSpacer =
                 new Region();
@@ -324,6 +353,7 @@ public class AppointmentView {
                 new HBox(
                         10,
                         refreshButton,
+                        loadingIndicator,
                         actionSpacer,
                         editButton,
                         completeButton,
@@ -560,60 +590,46 @@ public class AppointmentView {
     }
 
 
-    private void loadReferenceData() {
-
-        try {
-
-            List<PatientResponse> loadedPatients =
-                    patientApiService
-                            .getAllPatients();
-
-            patientOptions.setAll(
-                    loadedPatients
-            );
-
-
-            List<DoctorResponse> loadedDoctors =
-                    doctorApiService
-                            .getAllDoctors();
-
-            doctorOptions.setAll(
-                    loadedDoctors
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Appointment Data",
-                    exception.getMessage()
-            );
-        }
-    }
-
-
     private void loadAppointments() {
 
-        try {
-
-            List<AppointmentResponse> result =
-                    appointmentApiService
-                            .getAllAppointments();
-
-            appointments.setAll(
-                    result
-            );
-
-            appointmentTable
-                    .getSelectionModel()
-                    .clearSelection();
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Load Appointments",
-                    exception.getMessage()
-            );
+        if (busy.get()) {
+            return;
         }
+
+        busy.set(true);
+
+        AsyncTaskRunner.run(
+                () -> new AppointmentPageData(
+                        appointmentApiService.getAllAppointments(),
+                        patientApiService.getAllPatients(),
+                        doctorApiService.getAllDoctors()
+                ),
+                data -> {
+                    try {
+                        appointments.setAll(data.appointments());
+                        patientOptions.setAll(data.patientOptions());
+                        doctorOptions.setAll(data.doctorOptions());
+                        appointmentTable.getSelectionModel().clearSelection();
+                    } finally {
+                        busy.set(false);
+                    }
+                },
+                throwable -> {
+                    busy.set(false);
+
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Load Appointments",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Load Appointments",
+                                "An unexpected error occurred while loading appointments."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -683,42 +699,11 @@ public class AppointmentView {
     }
 
 
-    private void updateActionButtons(
-            AppointmentResponse appointment
-    ) {
-
-        boolean noSelection =
-                appointment == null;
-
-
-        editButton.setDisable(
-                noSelection
-        );
-
-        deleteButton.setDisable(
-                noSelection
-        );
-
-
-        boolean booked =
-                appointment != null
-                        && "BOOKED"
-                        .equalsIgnoreCase(
-                                appointment.getStatus()
-                        );
-
-
-        completeButton.setDisable(
-                !booked
-        );
-
-        cancelButton.setDisable(
-                !booked
-        );
-    }
-
-
     private void showAddAppointmentDialog() {
+
+        if (busy.get()) {
+            return;
+        }
 
         AppointmentFormResult formResult =
                 showAppointmentForm(
@@ -745,29 +730,46 @@ public class AppointmentView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            appointmentApiService
-                    .addAppointment(request);
+        AsyncTaskRunner.run(
+                () -> appointmentApiService.addAppointment(request),
+                response -> {
+                    try {
+                        appointments.add(response);
+                    } finally {
+                        busy.set(false);
+                    }
 
-            loadAppointments();
+                    showInformation(
+                            "Appointment Booked",
+                            "Appointment was booked successfully."
+                    );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            showInformation(
-                    "Appointment Booked",
-                    "Appointment was booked successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Book Appointment",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Book Appointment",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Book Appointment",
+                                "An unexpected error occurred while adding the appointment."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void editSelectedAppointment() {
+
+        if (busy.get()) {
+            return;
+        }
 
         AppointmentResponse selectedAppointment =
                 appointmentTable
@@ -806,33 +808,49 @@ public class AppointmentView {
                 );
 
 
-        try {
+        busy.set(true);
 
-            appointmentApiService
-                    .updateAppointment(
-                            selectedAppointment
-                                    .getAppointmentId(),
-                            request
+        AsyncTaskRunner.run(
+                () -> appointmentApiService.updateAppointment(selectedAppointment.getAppointmentId(), request),
+                response -> {
+                    try {
+                        int index = appointments.indexOf(selectedAppointment);
+                        if (index >= 0) {
+                            appointments.set(index, response);
+                        }
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Appointment Updated",
+                            "Appointment was updated successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadAppointments();
-
-            showInformation(
-                    "Appointment Updated",
-                    "Appointment was updated successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Update Appointment",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Update Appointment",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Update Appointment",
+                                "An unexpected error occurred while updating the appointment."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void completeSelectedAppointment() {
+
+        if (busy.get()) {
+            return;
+        }
 
         AppointmentResponse selectedAppointment =
                 appointmentTable
@@ -860,32 +878,49 @@ public class AppointmentView {
         }
 
 
-        try {
+        busy.set(true);
 
-            appointmentApiService
-                    .completeAppointment(
-                            selectedAppointment
-                                    .getAppointmentId()
+        AsyncTaskRunner.run(
+                () -> appointmentApiService.completeAppointment(selectedAppointment.getAppointmentId()),
+                response -> {
+                    try {
+                        int index = appointments.indexOf(selectedAppointment);
+                        if (index >= 0) {
+                            appointments.set(index, response);
+                        }
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Appointment Completed",
+                            "Appointment was marked as completed."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadAppointments();
-
-            showInformation(
-                    "Appointment Completed",
-                    "Appointment was marked as completed."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Complete Appointment",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Complete Appointment",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Complete Appointment",
+                                "An unexpected error occurred while completing the appointment."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void cancelSelectedAppointment() {
+
+        if (busy.get()) {
+            return;
+        }
 
         AppointmentResponse selectedAppointment =
                 appointmentTable
@@ -913,32 +948,49 @@ public class AppointmentView {
         }
 
 
-        try {
+        busy.set(true);
 
-            appointmentApiService
-                    .cancelAppointment(
-                            selectedAppointment
-                                    .getAppointmentId()
+        AsyncTaskRunner.run(
+                () -> appointmentApiService.cancelAppointment(selectedAppointment.getAppointmentId()),
+                response -> {
+                    try {
+                        int index = appointments.indexOf(selectedAppointment);
+                        if (index >= 0) {
+                            appointments.set(index, response);
+                        }
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Appointment Cancelled",
+                            "Appointment was cancelled successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadAppointments();
-
-            showInformation(
-                    "Appointment Cancelled",
-                    "Appointment was cancelled successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Cancel Appointment",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Cancel Appointment",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Cancel Appointment",
+                                "An unexpected error occurred while cancelling the appointment."
+                        );
+                    }
+                }
+        );
     }
 
 
     private void deleteSelectedAppointment() {
+
+        if (busy.get()) {
+            return;
+        }
 
         AppointmentResponse selectedAppointment =
                 appointmentTable
@@ -966,28 +1018,41 @@ public class AppointmentView {
         }
 
 
-        try {
+        busy.set(true);
 
-            appointmentApiService
-                    .deleteAppointment(
-                            selectedAppointment
-                                    .getAppointmentId()
+        AsyncTaskRunner.run(
+                () -> {
+                    appointmentApiService.deleteAppointment(selectedAppointment.getAppointmentId());
+                    return null;
+                },
+                response -> {
+                    try {
+                        appointments.remove(selectedAppointment);
+                    } finally {
+                        busy.set(false);
+                    }
+
+                    showInformation(
+                            "Appointment Deleted",
+                            "Appointment was deleted successfully."
                     );
+                },
+                throwable -> {
+                    busy.set(false);
 
-            loadAppointments();
-
-            showInformation(
-                    "Appointment Deleted",
-                    "Appointment was deleted successfully."
-            );
-
-        } catch (ApiException exception) {
-
-            showError(
-                    "Unable to Delete Appointment",
-                    exception.getMessage()
-            );
-        }
+                    if (throwable instanceof ApiException apiException) {
+                        showError(
+                                "Unable to Delete Appointment",
+                                apiException.getMessage()
+                        );
+                    } else {
+                        showError(
+                                "Unable to Delete Appointment",
+                                "An unexpected error occurred while deleting the appointment."
+                        );
+                    }
+                }
+        );
     }
 
 
@@ -1612,6 +1677,12 @@ public class AppointmentView {
             PatientResponse patient,
             DoctorResponse doctor,
             LocalDate appointmentDate
+    ) {
+    }
+    private record AppointmentPageData(
+            List<AppointmentResponse> appointments,
+            List<PatientResponse> patientOptions,
+            List<DoctorResponse> doctorOptions
     ) {
     }
 }
