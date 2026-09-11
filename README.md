@@ -2,7 +2,7 @@
 
 ### Healthcare Operations & Insurance Management System
 
-[![CareNexus CI](https://github.com/rithikamandiv-ux/Clinic-insurance-system/actions/workflows/ci.yml/badge.svg)](https://github.com/rithikamandiv-ux/Clinic-insurance-system/actions/workflows/ci.yml)
+[![CareNexus CI](https://github.com/rithikamandiv-ux/CareNexus/actions/workflows/ci.yml/badge.svg)](https://github.com/rithikamandiv-ux/Clinic-insurance-system/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-17-orange)
 ![JavaFX](https://img.shields.io/badge/JavaFX-21.0.6-blue)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
