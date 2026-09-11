@@ -6,6 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.validation.method.ParameterErrors;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -405,6 +409,62 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(response);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodValidationErrors(
+            HandlerMethodValidationException exception,
+            HttpServletRequest request
+    ) {
+
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+
+        for (ParameterValidationResult result : exception.getParameterValidationResults()) {
+
+            // MVC can also report validated request-body fields through this exception.
+            if (result instanceof ParameterErrors errors) {
+                for (FieldError error : errors.getFieldErrors()) {
+                    fieldErrors.putIfAbsent(error.getField(), error.getDefaultMessage());
+                }
+                continue;
+            }
+
+            PathVariable pathVariable = result.getMethodParameter()
+                    .getParameterAnnotation(PathVariable.class);
+            String parameterName = result.getMethodParameter().getParameterName();
+
+            if (pathVariable != null && !pathVariable.value().isBlank()) {
+                parameterName = pathVariable.value();
+            } else if (pathVariable != null && !pathVariable.name().isBlank()) {
+                parameterName = pathVariable.name();
+            }
+
+            if (parameterName == null) {
+                parameterName = "parameter" + result.getMethodParameter().getParameterIndex();
+            }
+
+            for (var error : result.getResolvableErrors()) {
+                fieldErrors.putIfAbsent(parameterName, error.getDefaultMessage());
+            }
+        }
+
+        // Return-value violations are server errors, not malformed client requests.
+        HttpStatus status = exception.isForReturnValue()
+                ? HttpStatus.INTERNAL_SERVER_ERROR
+                : HttpStatus.BAD_REQUEST;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.isForReturnValue()
+                        ? "Response validation failed"
+                        : "Request validation failed",
+                request.getRequestURI(),
+                exception.isForReturnValue() ? null : fieldErrors
+        );
+
+        return ResponseEntity.status(status).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

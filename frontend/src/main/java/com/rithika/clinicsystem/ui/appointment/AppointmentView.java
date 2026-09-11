@@ -4,7 +4,8 @@ import com.rithika.clinicsystem.api.ApiException;
 import com.rithika.clinicsystem.api.AppointmentApiService;
 import com.rithika.clinicsystem.api.DoctorApiService;
 import com.rithika.clinicsystem.api.PatientApiService;
-import com.rithika.clinicsystem.dto.AppointmentRequest;
+import com.rithika.clinicsystem.dto.AppointmentCreateRequest;
+import com.rithika.clinicsystem.dto.AppointmentUpdateRequest;
 import com.rithika.clinicsystem.dto.AppointmentResponse;
 import com.rithika.clinicsystem.dto.DoctorResponse;
 import com.rithika.clinicsystem.dto.PatientResponse;
@@ -721,8 +722,8 @@ public class AppointmentView {
         }
 
 
-        AppointmentRequest request =
-                new AppointmentRequest(
+        AppointmentCreateRequest request =
+                new AppointmentCreateRequest(
                         formResult.appointmentId(),
                         formResult
                                 .patient()
@@ -798,10 +799,8 @@ public class AppointmentView {
         }
 
 
-        AppointmentRequest request =
-                new AppointmentRequest(
-                        selectedAppointment
-                                .getAppointmentId(),
+        AppointmentUpdateRequest request =
+                new AppointmentUpdateRequest(
                         formResult
                                 .patient()
                                 .getPatientId(),

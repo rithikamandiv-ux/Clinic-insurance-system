@@ -1,6 +1,7 @@
 package com.rithika.clinicsystem.api;
 
-import com.rithika.clinicsystem.dto.DoctorRequest;
+import com.rithika.clinicsystem.dto.DoctorCreateRequest;
+import com.rithika.clinicsystem.dto.DoctorUpdateRequest;
 import com.rithika.clinicsystem.dto.DoctorResponse;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class DoctorApiService {
     }
 
     public DoctorResponse addDoctor(
-            DoctorRequest request
+            DoctorCreateRequest request
     ) {
 
         return apiClient.post(
@@ -44,7 +45,7 @@ public class DoctorApiService {
 
     public DoctorResponse updateDoctor(
             String doctorId,
-            DoctorRequest request
+            DoctorUpdateRequest request
     ) {
 
         return apiClient.put(

@@ -5,6 +5,7 @@ import com.rithika.clinicinsurance.dto.InsuranceClaimResponse;
 import com.rithika.clinicinsurance.model.InsuranceClaim;
 import com.rithika.clinicinsurance.service.InsuranceClaimService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,12 @@ public class InsuranceClaimController {
     @GetMapping("/{claimId}")
     public ResponseEntity<InsuranceClaimResponse>
     getClaimById(
-            @PathVariable String claimId
+            @PathVariable("claimId")
+            @Pattern(
+                    regexp = "^CL\\d{3}$",
+                    message = "Claim ID must follow the format CL###, for example CL001."
+            )
+            String claimId
     ) {
 
         InsuranceClaim claim =
@@ -71,7 +77,12 @@ public class InsuranceClaimController {
     @PatchMapping("/{claimId}/process")
     public ResponseEntity<InsuranceClaimResponse>
     processClaim(
-            @PathVariable String claimId
+            @PathVariable("claimId")
+            @Pattern(
+                    regexp = "^CL\\d{3}$",
+                    message = "Claim ID must follow the format CL###, for example CL001."
+            )
+            String claimId
     ) {
 
         InsuranceClaim claim =

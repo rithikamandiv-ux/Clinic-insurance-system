@@ -1,10 +1,12 @@
 package com.rithika.clinicinsurance.controller;
 
-import com.rithika.clinicinsurance.dto.PatientRequest;
+import com.rithika.clinicinsurance.dto.PatientCreateRequest;
+import com.rithika.clinicinsurance.dto.PatientUpdateRequest;
 import com.rithika.clinicinsurance.dto.PatientResponse;
 import com.rithika.clinicinsurance.model.Patient;
 import com.rithika.clinicinsurance.service.PatientService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +37,12 @@ public class PatientController {
 
     @GetMapping("/{patientId}")
     public ResponseEntity<PatientResponse> getPatientById(
-            @PathVariable String patientId
+            @PathVariable("patientId")
+            @Pattern(
+                    regexp = "^P\\d{3}$",
+                    message = "Patient ID must follow the format P###, for example P001."
+            )
+            String patientId
     ) {
 
         Patient patient = patientService.getPatientById(patientId);
@@ -47,7 +54,7 @@ public class PatientController {
 
     @PostMapping
     public ResponseEntity<PatientResponse> addPatient(
-            @Valid @RequestBody PatientRequest request
+            @Valid @RequestBody PatientCreateRequest request
     ) {
 
         Patient patient = new Patient(
@@ -67,8 +74,13 @@ public class PatientController {
 
     @PutMapping("/{patientId}")
     public ResponseEntity<PatientResponse> updatePatient(
-            @PathVariable String patientId,
-            @Valid @RequestBody PatientRequest request
+            @PathVariable("patientId")
+            @Pattern(
+                    regexp = "^P\\d{3}$",
+                    message = "Patient ID must follow the format P###, for example P001."
+            )
+            String patientId,
+            @Valid @RequestBody PatientUpdateRequest request
     ) {
 
         Patient updatedPatient = new Patient(
@@ -91,7 +103,12 @@ public class PatientController {
 
     @DeleteMapping("/{patientId}")
     public ResponseEntity<Void> deletePatient(
-            @PathVariable String patientId
+            @PathVariable("patientId")
+            @Pattern(
+                    regexp = "^P\\d{3}$",
+                    message = "Patient ID must follow the format P###, for example P001."
+            )
+            String patientId
     ) {
 
         patientService.deletePatient(patientId);

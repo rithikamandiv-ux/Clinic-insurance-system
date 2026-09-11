@@ -3,7 +3,8 @@ package com.rithika.clinicsystem.ui.policy;
 import com.rithika.clinicsystem.api.ApiException;
 import com.rithika.clinicsystem.api.InsurancePolicyApiService;
 import com.rithika.clinicsystem.api.PatientApiService;
-import com.rithika.clinicsystem.dto.InsurancePolicyRequest;
+import com.rithika.clinicsystem.dto.InsurancePolicyCreateRequest;
+import com.rithika.clinicsystem.dto.InsurancePolicyUpdateRequest;
 import com.rithika.clinicsystem.dto.InsurancePolicyResponse;
 import com.rithika.clinicsystem.dto.PatientResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
@@ -530,8 +531,8 @@ public class InsurancePolicyView {
         }
 
 
-        InsurancePolicyRequest request =
-                new InsurancePolicyRequest(
+        InsurancePolicyCreateRequest request =
+                new InsurancePolicyCreateRequest(
                         formResult.policyId(),
                         formResult
                                 .patient()
@@ -606,12 +607,8 @@ public class InsurancePolicyView {
         }
 
 
-        InsurancePolicyRequest request =
-                new InsurancePolicyRequest(
-                        selectedPolicy
-                                .getPolicyId(),
-                        selectedPolicy
-                                .getPatientId(),
+        InsurancePolicyUpdateRequest request =
+                new InsurancePolicyUpdateRequest(
                         formResult.providerName(),
                         formResult.coverageAmount(),
                         formResult.policyType()

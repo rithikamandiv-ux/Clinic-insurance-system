@@ -2,17 +2,17 @@ package com.rithika.clinicsystem.dto;
 
 import java.math.BigDecimal;
 
-public class DoctorRequest {
+public class DoctorCreateRequest {
 
     private String doctorId;
     private String doctorName;
     private String specialization;
     private BigDecimal consultationFee;
 
-    public DoctorRequest() {
+    public DoctorCreateRequest() {
     }
 
-    public DoctorRequest(
+    public DoctorCreateRequest(
             String doctorId,
             String doctorName,
             String specialization,

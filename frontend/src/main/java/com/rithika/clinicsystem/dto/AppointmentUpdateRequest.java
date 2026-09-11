@@ -2,34 +2,23 @@ package com.rithika.clinicsystem.dto;
 
 import java.time.LocalDate;
 
-public class AppointmentRequest {
+public class AppointmentUpdateRequest {
 
-    private String appointmentId;
     private String patientId;
     private String doctorId;
     private LocalDate appointmentDate;
 
-    public AppointmentRequest() {
+    public AppointmentUpdateRequest() {
     }
 
-    public AppointmentRequest(
-            String appointmentId,
+    public AppointmentUpdateRequest(
             String patientId,
             String doctorId,
             LocalDate appointmentDate
     ) {
-        this.appointmentId = appointmentId;
         this.patientId = patientId;
         this.doctorId = doctorId;
         this.appointmentDate = appointmentDate;
-    }
-
-    public String getAppointmentId() {
-        return appointmentId;
-    }
-
-    public void setAppointmentId(String appointmentId) {
-        this.appointmentId = appointmentId;
     }
 
     public String getPatientId() {

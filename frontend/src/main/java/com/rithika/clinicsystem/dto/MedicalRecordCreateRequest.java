@@ -2,7 +2,7 @@ package com.rithika.clinicsystem.dto;
 
 import java.math.BigDecimal;
 
-public class MedicalRecordRequest {
+public class MedicalRecordCreateRequest {
 
     private String recordId;
     private String appointmentId;
@@ -10,10 +10,10 @@ public class MedicalRecordRequest {
     private String treatment;
     private BigDecimal treatmentCost;
 
-    public MedicalRecordRequest() {
+    public MedicalRecordCreateRequest() {
     }
 
-    public MedicalRecordRequest(
+    public MedicalRecordCreateRequest(
             String recordId,
             String appointmentId,
             String diagnosis,

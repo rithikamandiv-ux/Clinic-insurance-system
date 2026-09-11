@@ -1,10 +1,12 @@
 package com.rithika.clinicinsurance.controller;
 
-import com.rithika.clinicinsurance.dto.InsurancePolicyRequest;
+import com.rithika.clinicinsurance.dto.InsurancePolicyCreateRequest;
+import com.rithika.clinicinsurance.dto.InsurancePolicyUpdateRequest;
 import com.rithika.clinicinsurance.dto.InsurancePolicyResponse;
 import com.rithika.clinicinsurance.model.InsurancePolicy;
 import com.rithika.clinicinsurance.service.InsurancePolicyService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +42,12 @@ public class InsurancePolicyController {
     @GetMapping("/{policyId}")
     public ResponseEntity<InsurancePolicyResponse>
     getPolicyById(
-            @PathVariable String policyId
+            @PathVariable("policyId")
+            @Pattern(
+                    regexp = "^POL\\d{3}$",
+                    message = "Policy ID must follow the format POL###, for example POL001."
+            )
+            String policyId
     ) {
 
         InsurancePolicy policy =
@@ -54,7 +61,7 @@ public class InsurancePolicyController {
     @PostMapping
     public ResponseEntity<InsurancePolicyResponse>
     addPolicy(
-            @Valid @RequestBody InsurancePolicyRequest request
+            @Valid @RequestBody InsurancePolicyCreateRequest request
     ) {
 
         InsurancePolicy policy =
@@ -74,8 +81,13 @@ public class InsurancePolicyController {
     @PutMapping("/{policyId}")
     public ResponseEntity<InsurancePolicyResponse>
     updatePolicy(
-            @PathVariable String policyId,
-            @Valid @RequestBody InsurancePolicyRequest request
+            @PathVariable("policyId")
+            @Pattern(
+                    regexp = "^POL\\d{3}$",
+                    message = "Policy ID must follow the format POL###, for example POL001."
+            )
+            String policyId,
+            @Valid @RequestBody InsurancePolicyUpdateRequest request
     ) {
 
         InsurancePolicy policy =
@@ -93,7 +105,12 @@ public class InsurancePolicyController {
 
     @DeleteMapping("/{policyId}")
     public ResponseEntity<Void> deletePolicy(
-            @PathVariable String policyId
+            @PathVariable("policyId")
+            @Pattern(
+                    regexp = "^POL\\d{3}$",
+                    message = "Policy ID must follow the format POL###, for example POL001."
+            )
+            String policyId
     ) {
 
         insurancePolicyService.deletePolicy(policyId);

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class PatientRequest {
+public class PatientCreateRequest {
 
     @NotBlank(message = "Patient ID is required")
     @Size(max = 20, message = "Patient ID cannot exceed 20 characters")
@@ -36,7 +36,7 @@ public class PatientRequest {
     @NotNull(message = "Insurance status is required")
     private Boolean insuranceStatus;
 
-    public PatientRequest() {
+    public PatientCreateRequest() {
     }
 
     public String getPatientId() {

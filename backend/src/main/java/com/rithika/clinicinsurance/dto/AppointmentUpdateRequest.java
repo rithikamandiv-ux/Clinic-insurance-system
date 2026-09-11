@@ -3,21 +3,11 @@ package com.rithika.clinicinsurance.dto;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDate;
 
-public class AppointmentRequest {
-
-    @NotBlank(message = "Appointment ID is required")
-    @Size(max = 20, message = "Appointment ID cannot exceed 20 characters")
-    @Pattern(
-            regexp = "^A\\d{3}$",
-            message = "Appointment ID must follow the format A###, for example A001."
-    )
-    private String appointmentId;
-
+public class AppointmentUpdateRequest {
 
     @NotBlank(message = "Patient ID is required")
     @Pattern(
@@ -25,7 +15,6 @@ public class AppointmentRequest {
             message = "Patient ID must follow the format P###, for example P001."
     )
     private String patientId;
-
 
     @NotBlank(message = "Doctor ID is required")
     @Pattern(
@@ -38,15 +27,7 @@ public class AppointmentRequest {
     @FutureOrPresent(message = "Appointment date cannot be in the past")
     private LocalDate appointmentDate;
 
-    public AppointmentRequest() {
-    }
-
-    public String getAppointmentId() {
-        return appointmentId;
-    }
-
-    public void setAppointmentId(String appointmentId) {
-        this.appointmentId = appointmentId;
+    public AppointmentUpdateRequest() {
     }
 
     public String getPatientId() {

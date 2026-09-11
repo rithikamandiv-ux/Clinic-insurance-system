@@ -1,36 +1,25 @@
 package com.rithika.clinicsystem.dto;
 
-public class PatientRequest {
+public class PatientUpdateRequest {
 
-    private String patientId;
     private String patientName;
     private Integer age;
     private String phoneNumber;
     private Boolean insuranceStatus;
 
-    public PatientRequest() {
+    public PatientUpdateRequest() {
     }
 
-    public PatientRequest(
-            String patientId,
+    public PatientUpdateRequest(
             String patientName,
             Integer age,
             String phoneNumber,
             Boolean insuranceStatus
     ) {
-        this.patientId = patientId;
         this.patientName = patientName;
         this.age = age;
         this.phoneNumber = phoneNumber;
         this.insuranceStatus = insuranceStatus;
-    }
-
-    public String getPatientId() {
-        return patientId;
-    }
-
-    public void setPatientId(String patientId) {
-        this.patientId = patientId;
     }
 
     public String getPatientName() {

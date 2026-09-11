@@ -1,10 +1,12 @@
 package com.rithika.clinicinsurance.controller;
 
-import com.rithika.clinicinsurance.dto.AppointmentRequest;
+import com.rithika.clinicinsurance.dto.AppointmentCreateRequest;
+import com.rithika.clinicinsurance.dto.AppointmentUpdateRequest;
 import com.rithika.clinicinsurance.dto.AppointmentResponse;
 import com.rithika.clinicinsurance.model.Appointment;
 import com.rithika.clinicinsurance.service.AppointmentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +42,12 @@ public class AppointmentController {
     @GetMapping("/{appointmentId}")
     public ResponseEntity<AppointmentResponse>
     getAppointmentById(
-            @PathVariable String appointmentId
+            @PathVariable("appointmentId")
+            @Pattern(
+                    regexp = "^A\\d{3}$",
+                    message = "Appointment ID must follow the format A###, for example A001."
+            )
+            String appointmentId
     ) {
 
         Appointment appointment =
@@ -55,7 +62,7 @@ public class AppointmentController {
     @PostMapping
     public ResponseEntity<AppointmentResponse>
     addAppointment(
-            @Valid @RequestBody AppointmentRequest request
+            @Valid @RequestBody AppointmentCreateRequest request
     ) {
 
         Appointment appointment =
@@ -74,8 +81,13 @@ public class AppointmentController {
     @PutMapping("/{appointmentId}")
     public ResponseEntity<AppointmentResponse>
     updateAppointment(
-            @PathVariable String appointmentId,
-            @Valid @RequestBody AppointmentRequest request
+            @PathVariable("appointmentId")
+            @Pattern(
+                    regexp = "^A\\d{3}$",
+                    message = "Appointment ID must follow the format A###, for example A001."
+            )
+            String appointmentId,
+            @Valid @RequestBody AppointmentUpdateRequest request
     ) {
 
         Appointment appointment =
@@ -93,7 +105,12 @@ public class AppointmentController {
 
     @PatchMapping("/{appointmentId}/complete")
     public ResponseEntity<AppointmentResponse> completeAppointment(
-            @PathVariable String appointmentId
+            @PathVariable("appointmentId")
+            @Pattern(
+                    regexp = "^A\\d{3}$",
+                    message = "Appointment ID must follow the format A###, for example A001."
+            )
+            String appointmentId
     ) {
 
         Appointment appointment =
@@ -106,7 +123,12 @@ public class AppointmentController {
 
     @PatchMapping("/{appointmentId}/cancel")
     public ResponseEntity<AppointmentResponse> cancelAppointment(
-            @PathVariable String appointmentId
+            @PathVariable("appointmentId")
+            @Pattern(
+                    regexp = "^A\\d{3}$",
+                    message = "Appointment ID must follow the format A###, for example A001."
+            )
+            String appointmentId
     ) {
 
         Appointment appointment =
@@ -119,7 +141,12 @@ public class AppointmentController {
 
     @DeleteMapping("/{appointmentId}")
     public ResponseEntity<Void> deleteAppointment(
-            @PathVariable String appointmentId
+            @PathVariable("appointmentId")
+            @Pattern(
+                    regexp = "^A\\d{3}$",
+                    message = "Appointment ID must follow the format A###, for example A001."
+            )
+            String appointmentId
     ) {
 
         appointmentService.deleteAppointment(appointmentId);

@@ -4,7 +4,8 @@ import com.rithika.clinicsystem.api.ApiException;
 import com.rithika.clinicsystem.api.AppointmentApiService;
 import com.rithika.clinicsystem.api.MedicalRecordApiService;
 import com.rithika.clinicsystem.dto.AppointmentResponse;
-import com.rithika.clinicsystem.dto.MedicalRecordRequest;
+import com.rithika.clinicsystem.dto.MedicalRecordCreateRequest;
+import com.rithika.clinicsystem.dto.MedicalRecordUpdateRequest;
 import com.rithika.clinicsystem.dto.MedicalRecordResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
 import com.rithika.clinicsystem.util.AsyncTaskRunner;
@@ -661,8 +662,8 @@ public class MedicalRecordView {
         }
 
 
-        MedicalRecordRequest request =
-                new MedicalRecordRequest(
+        MedicalRecordCreateRequest request =
+                new MedicalRecordCreateRequest(
                         formResult.recordId(),
                         formResult.appointmentId(),
                         formResult.diagnosis(),
@@ -735,21 +736,8 @@ public class MedicalRecordView {
         }
 
 
-        /*
-         * The current backend uses the same validated request
-         * DTO for both POST and PUT.
-         *
-         * Therefore recordId and appointmentId are still sent
-         * during an update even though the backend service only
-         * changes diagnosis, treatment and treatment cost.
-         */
-
-        MedicalRecordRequest request =
-                new MedicalRecordRequest(
-                        selectedRecord
-                                .getRecordId(),
-                        selectedRecord
-                                .getAppointmentId(),
+        MedicalRecordUpdateRequest request =
+                new MedicalRecordUpdateRequest(
                         formResult.diagnosis(),
                         formResult.treatment(),
                         formResult.treatmentCost()

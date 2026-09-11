@@ -2,7 +2,8 @@ package com.rithika.clinicsystem.ui.patient;
 
 import com.rithika.clinicsystem.api.ApiException;
 import com.rithika.clinicsystem.api.PatientApiService;
-import com.rithika.clinicsystem.dto.PatientRequest;
+import com.rithika.clinicsystem.dto.PatientCreateRequest;
+import com.rithika.clinicsystem.dto.PatientUpdateRequest;
 import com.rithika.clinicsystem.dto.PatientResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
 import com.rithika.clinicsystem.util.AsyncTaskRunner;
@@ -540,8 +541,8 @@ public class PatientView {
         }
 
 
-        PatientRequest request =
-                new PatientRequest(
+        PatientCreateRequest request =
+                new PatientCreateRequest(
                         formResult.patientId(),
                         formResult.patientName(),
                         formResult.age(),
@@ -620,9 +621,8 @@ public class PatientView {
         }
 
 
-        PatientRequest request =
-                new PatientRequest(
-                        selectedPatient.getPatientId(),
+        PatientUpdateRequest request =
+                new PatientUpdateRequest(
                         formResult.patientName(),
                         formResult.age(),
                         formResult.phoneNumber(),

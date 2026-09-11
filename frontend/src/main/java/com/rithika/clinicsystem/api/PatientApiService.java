@@ -1,6 +1,7 @@
 package com.rithika.clinicsystem.api;
 
-import com.rithika.clinicsystem.dto.PatientRequest;
+import com.rithika.clinicsystem.dto.PatientCreateRequest;
+import com.rithika.clinicsystem.dto.PatientUpdateRequest;
 import com.rithika.clinicsystem.dto.PatientResponse;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class PatientApiService {
     }
 
     public PatientResponse addPatient(
-            PatientRequest request
+            PatientCreateRequest request
     ) {
 
         return apiClient.post(
@@ -44,7 +45,7 @@ public class PatientApiService {
 
     public PatientResponse updatePatient(
             String patientId,
-            PatientRequest request
+            PatientUpdateRequest request
     ) {
 
         return apiClient.put(

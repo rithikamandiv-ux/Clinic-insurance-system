@@ -1,6 +1,7 @@
 package com.rithika.clinicsystem.api;
 
-import com.rithika.clinicsystem.dto.InsurancePolicyRequest;
+import com.rithika.clinicsystem.dto.InsurancePolicyCreateRequest;
+import com.rithika.clinicsystem.dto.InsurancePolicyUpdateRequest;
 import com.rithika.clinicsystem.dto.InsurancePolicyResponse;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class InsurancePolicyApiService {
     }
 
     public InsurancePolicyResponse addPolicy(
-            InsurancePolicyRequest request
+            InsurancePolicyCreateRequest request
     ) {
 
         return apiClient.post(
@@ -46,7 +47,7 @@ public class InsurancePolicyApiService {
 
     public InsurancePolicyResponse updatePolicy(
             String policyId,
-            InsurancePolicyRequest request
+            InsurancePolicyUpdateRequest request
     ) {
 
         return apiClient.put(

@@ -2,7 +2,8 @@ package com.rithika.clinicsystem.ui.doctor;
 
 import com.rithika.clinicsystem.api.ApiException;
 import com.rithika.clinicsystem.api.DoctorApiService;
-import com.rithika.clinicsystem.dto.DoctorRequest;
+import com.rithika.clinicsystem.dto.DoctorCreateRequest;
+import com.rithika.clinicsystem.dto.DoctorUpdateRequest;
 import com.rithika.clinicsystem.dto.DoctorResponse;
 import com.rithika.clinicsystem.ui.ThemeManager;
 import com.rithika.clinicsystem.util.InputValidator;
@@ -549,8 +550,8 @@ public class DoctorView {
         }
 
 
-        DoctorRequest request =
-                new DoctorRequest(
+        DoctorCreateRequest request =
+                new DoctorCreateRequest(
                         formResult.doctorId(),
                         formResult.doctorName(),
                         formResult.specialization(),
@@ -632,10 +633,8 @@ public class DoctorView {
         }
 
 
-        DoctorRequest request =
-                new DoctorRequest(
-                        selectedDoctor
-                                .getDoctorId(),
+        DoctorUpdateRequest request =
+                new DoctorUpdateRequest(
                         formResult.doctorName(),
                         formResult.specialization(),
                         formResult.consultationFee()

@@ -1,6 +1,7 @@
 package com.rithika.clinicsystem.api;
 
-import com.rithika.clinicsystem.dto.AppointmentRequest;
+import com.rithika.clinicsystem.dto.AppointmentCreateRequest;
+import com.rithika.clinicsystem.dto.AppointmentUpdateRequest;
 import com.rithika.clinicsystem.dto.AppointmentResponse;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class AppointmentApiService {
     }
 
     public AppointmentResponse addAppointment(
-            AppointmentRequest request
+            AppointmentCreateRequest request
     ) {
 
         return apiClient.post(
@@ -46,7 +47,7 @@ public class AppointmentApiService {
 
     public AppointmentResponse updateAppointment(
             String appointmentId,
-            AppointmentRequest request
+            AppointmentUpdateRequest request
     ) {
 
         return apiClient.put(

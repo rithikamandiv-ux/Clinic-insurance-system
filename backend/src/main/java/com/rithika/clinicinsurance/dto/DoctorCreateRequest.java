@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 
-public class DoctorRequest {
+public class DoctorCreateRequest {
 
     @NotBlank(message = "Doctor ID is required")
     @Size(max = 20, message = "Doctor ID cannot exceed 20 characters")
@@ -40,7 +40,7 @@ public class DoctorRequest {
     )
     private BigDecimal consultationFee;
 
-    public DoctorRequest() {
+    public DoctorCreateRequest() {
     }
 
     public String getDoctorId() {

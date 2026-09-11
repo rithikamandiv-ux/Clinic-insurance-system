@@ -2,7 +2,7 @@ package com.rithika.clinicsystem.dto;
 
 import java.math.BigDecimal;
 
-public class InsurancePolicyRequest {
+public class InsurancePolicyCreateRequest {
 
     private String policyId;
     private String patientId;
@@ -10,10 +10,10 @@ public class InsurancePolicyRequest {
     private BigDecimal coverageAmount;
     private String policyType;
 
-    public InsurancePolicyRequest() {
+    public InsurancePolicyCreateRequest() {
     }
 
-    public InsurancePolicyRequest(
+    public InsurancePolicyCreateRequest(
             String policyId,
             String patientId,
             String providerName,

@@ -1,10 +1,12 @@
 package com.rithika.clinicinsurance.controller;
 
-import com.rithika.clinicinsurance.dto.MedicalRecordRequest;
+import com.rithika.clinicinsurance.dto.MedicalRecordCreateRequest;
+import com.rithika.clinicinsurance.dto.MedicalRecordUpdateRequest;
 import com.rithika.clinicinsurance.dto.MedicalRecordResponse;
 import com.rithika.clinicinsurance.model.MedicalRecord;
 import com.rithika.clinicinsurance.service.MedicalRecordService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +42,12 @@ public class MedicalRecordController {
     @GetMapping("/{recordId}")
     public ResponseEntity<MedicalRecordResponse>
     getMedicalRecordById(
-            @PathVariable String recordId
+            @PathVariable("recordId")
+            @Pattern(
+                    regexp = "^MR\\d{3}$",
+                    message = "Medical Record ID must follow the format MR###, for example MR001."
+            )
+            String recordId
     ) {
 
         MedicalRecord medicalRecord =
@@ -54,7 +61,7 @@ public class MedicalRecordController {
     @PostMapping
     public ResponseEntity<MedicalRecordResponse>
     addMedicalRecord(
-            @Valid @RequestBody MedicalRecordRequest request
+            @Valid @RequestBody MedicalRecordCreateRequest request
     ) {
 
         MedicalRecord medicalRecord =
@@ -74,8 +81,13 @@ public class MedicalRecordController {
     @PutMapping("/{recordId}")
     public ResponseEntity<MedicalRecordResponse>
     updateMedicalRecord(
-            @PathVariable String recordId,
-            @Valid @RequestBody MedicalRecordRequest request
+            @PathVariable("recordId")
+            @Pattern(
+                    regexp = "^MR\\d{3}$",
+                    message = "Medical Record ID must follow the format MR###, for example MR001."
+            )
+            String recordId,
+            @Valid @RequestBody MedicalRecordUpdateRequest request
     ) {
 
         MedicalRecord medicalRecord =
@@ -93,7 +105,12 @@ public class MedicalRecordController {
 
     @DeleteMapping("/{recordId}")
     public ResponseEntity<Void> deleteMedicalRecord(
-            @PathVariable String recordId
+            @PathVariable("recordId")
+            @Pattern(
+                    regexp = "^MR\\d{3}$",
+                    message = "Medical Record ID must follow the format MR###, for example MR001."
+            )
+            String recordId
     ) {
 
         medicalRecordService.deleteMedicalRecord(recordId);
