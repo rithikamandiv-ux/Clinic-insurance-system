@@ -91,6 +91,8 @@ public class InsurancePolicyView {
         ProgressIndicator loadingIndicator =
                 new ProgressIndicator();
 
+        loadingIndicator.setAccessibleText("Insurance policy request in progress");
+
         loadingIndicator.setPrefSize(18, 18);
         loadingIndicator.setMinSize(18, 18);
         loadingIndicator.setMaxSize(18, 18);
@@ -169,6 +171,8 @@ public class InsurancePolicyView {
 
         TextField searchField =
                 new TextField();
+
+        searchField.setAccessibleText("Search insurance policies");
 
         searchField.setPromptText(
                 "Search by policy ID, patient, provider or policy type"
@@ -859,6 +863,12 @@ public class InsurancePolicyView {
                 new Insets(20)
         );
 
+
+        policyIdField.setAccessibleText("Policy ID");
+        patientComboBox.setAccessibleText("Patient");
+        providerNameField.setAccessibleText("Provider Name");
+        coverageAmountField.setAccessibleText("Coverage Amount");
+        policyTypeField.setAccessibleText("Policy Type");
 
         form.add(
                 new Label("Policy ID"),

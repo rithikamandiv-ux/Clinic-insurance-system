@@ -91,6 +91,8 @@ public class MedicalRecordView {
         ProgressIndicator loadingIndicator =
                 new ProgressIndicator();
 
+        loadingIndicator.setAccessibleText("Medical record request in progress");
+
         loadingIndicator.setPrefSize(18, 18);
         loadingIndicator.setMinSize(18, 18);
         loadingIndicator.setMaxSize(18, 18);
@@ -181,6 +183,8 @@ public class MedicalRecordView {
 
         TextField searchField =
                 new TextField();
+
+        searchField.setAccessibleText("Search medical records");
 
         searchField.setPromptText(
                 "Search by record, appointment, patient, doctor, diagnosis or treatment"
@@ -481,6 +485,22 @@ public class MedicalRecordView {
                 }
         );
 
+
+        // Give clinical text more room while keeping IDs and amounts readable.
+        recordIdColumn.setMinWidth(85);
+        recordIdColumn.setPrefWidth(90);
+        appointmentIdColumn.setMinWidth(115);
+        appointmentIdColumn.setPrefWidth(120);
+        patientIdColumn.setMinWidth(75);
+        patientIdColumn.setPrefWidth(80);
+        doctorIdColumn.setMinWidth(75);
+        doctorIdColumn.setPrefWidth(80);
+        diagnosisColumn.setMinWidth(160);
+        diagnosisColumn.setPrefWidth(240);
+        treatmentColumn.setMinWidth(160);
+        treatmentColumn.setPrefWidth(240);
+        treatmentCostColumn.setMinWidth(135);
+        treatmentCostColumn.setPrefWidth(150);
 
         medicalRecordTable
                 .getColumns()
@@ -1045,6 +1065,12 @@ public class MedicalRecordView {
                 new Insets(20)
         );
 
+
+        recordIdField.setAccessibleText("Record ID");
+        appointmentComboBox.setAccessibleText("Completed Appointment");
+        diagnosisArea.setAccessibleText("Diagnosis");
+        treatmentArea.setAccessibleText("Treatment");
+        treatmentCostField.setAccessibleText("Treatment Cost");
 
         form.add(
                 new Label("Record ID"),

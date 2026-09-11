@@ -93,6 +93,8 @@ public class InsuranceClaimView {
         ProgressIndicator loadingIndicator =
                 new ProgressIndicator();
 
+        loadingIndicator.setAccessibleText("Insurance claim request in progress");
+
         loadingIndicator.setPrefSize(18, 18);
         loadingIndicator.setMinSize(18, 18);
         loadingIndicator.setMaxSize(18, 18);
@@ -183,6 +185,8 @@ public class InsuranceClaimView {
 
         TextField searchField =
                 new TextField();
+
+        searchField.setAccessibleText("Search insurance claims");
 
         searchField.setPromptText(
                 "Search by claim ID, medical record, patient or status"
@@ -734,6 +738,9 @@ public class InsuranceClaimView {
                 new Insets(20)
         );
 
+
+        claimIdField.setAccessibleText("Claim ID");
+        medicalRecordComboBox.setAccessibleText("Medical Record");
 
         form.add(
                 new Label("Claim ID"),

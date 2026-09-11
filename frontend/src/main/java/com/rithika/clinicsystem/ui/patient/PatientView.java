@@ -81,6 +81,8 @@ public class PatientView {
         ProgressIndicator loadingIndicator =
                 new ProgressIndicator();
 
+        loadingIndicator.setAccessibleText("Patient request in progress");
+
         loadingIndicator.setPrefSize(18, 18);
         loadingIndicator.setMinSize(18, 18);
         loadingIndicator.setMaxSize(18, 18);
@@ -172,6 +174,8 @@ public class PatientView {
 
         TextField searchField =
                 new TextField();
+
+        searchField.setAccessibleText("Search patients");
 
         searchField.setPromptText(
                 "Search by patient ID, name or phone number"
@@ -868,6 +872,11 @@ public class PatientView {
                 new Insets(20)
         );
 
+
+        patientIdField.setAccessibleText("Patient ID");
+        nameField.setAccessibleText("Name");
+        ageField.setAccessibleText("Age");
+        phoneField.setAccessibleText("Phone Number");
 
         form.add(
                 new Label("Patient ID"),

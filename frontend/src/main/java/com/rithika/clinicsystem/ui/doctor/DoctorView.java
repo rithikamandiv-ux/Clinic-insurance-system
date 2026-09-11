@@ -88,6 +88,8 @@ public class DoctorView {
         ProgressIndicator loadingIndicator =
                 new ProgressIndicator();
 
+        loadingIndicator.setAccessibleText("Doctor request in progress");
+
         loadingIndicator.setPrefSize(
                 18,
                 18
@@ -186,6 +188,8 @@ public class DoctorView {
 
         TextField searchField =
                 new TextField();
+
+        searchField.setAccessibleText("Search doctors");
 
         searchField.setPromptText(
                 "Search by doctor ID, name or specialization"
@@ -899,6 +903,11 @@ public class DoctorView {
                 new Insets(20)
         );
 
+
+        doctorIdField.setAccessibleText("Doctor ID");
+        doctorNameField.setAccessibleText("Name");
+        specializationField.setAccessibleText("Specialization");
+        consultationFeeField.setAccessibleText("Consultation Fee");
 
         form.add(
                 new Label("Doctor ID"),

@@ -553,6 +553,7 @@
    ========================================================= */
 
 .search-field {
+    -fx-min-height: 42px;
     -fx-pref-height: 42px;
 
     -fx-background-color: -color-white;
@@ -740,4 +741,27 @@
     -fx-padding: 10px 20px;
 
     -fx-alignment: CENTER;
+}
+
+/* Keep keyboard focus visible over the custom control backgrounds. */
+.page-content .button:focused,
+.dialog-pane .button:focused {
+    -fx-border-color: -color-white, -color-primary;
+    -fx-border-width: 1px, 1px;
+    -fx-border-insets: 1px, -2px;
+    -fx-border-radius: 7px, 9px;
+}
+
+.top-nav-button:focused {
+    -fx-effect: innershadow(gaussian, -color-soft-blue, 4, 0.6, 0, 0);
+}
+
+.table-view:focused,
+.text-area:focused {
+    -fx-border-color: -color-primary;
+}
+
+.check-box:focused .box {
+    -fx-border-color: -color-primary;
+    -fx-border-width: 2px;
 }

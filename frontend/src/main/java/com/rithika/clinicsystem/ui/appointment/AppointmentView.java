@@ -105,6 +105,8 @@ public class AppointmentView {
         ProgressIndicator loadingIndicator =
                 new ProgressIndicator();
 
+        loadingIndicator.setAccessibleText("Appointment request in progress");
+
         loadingIndicator.setPrefSize(18, 18);
         loadingIndicator.setMinSize(18, 18);
         loadingIndicator.setMaxSize(18, 18);
@@ -195,6 +197,8 @@ public class AppointmentView {
 
         TextField searchField =
                 new TextField();
+
+        searchField.setAccessibleText("Search appointments");
 
         searchField.setPromptText(
                 "Search by appointment ID, patient, doctor or status"
@@ -1201,6 +1205,11 @@ public class AppointmentView {
                 new Insets(20)
         );
 
+
+        appointmentIdField.setAccessibleText("Appointment ID");
+        patientComboBox.setAccessibleText("Patient");
+        doctorComboBox.setAccessibleText("Doctor");
+        appointmentDatePicker.setAccessibleText("Appointment Date");
 
         form.add(
                 new Label("Appointment ID"),
